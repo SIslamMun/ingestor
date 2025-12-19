@@ -153,7 +153,12 @@ class WebExtractor(BaseExtractor):
 
         results = []
         async with AsyncWebCrawler(config=browser_config) as crawler:
-            async for result in await crawler.arun(url=url, config=run_config):
+            crawl_results = await crawler.arun(url=url, config=run_config)
+            # Handle both list and single result
+            if not isinstance(crawl_results, list):
+                crawl_results = [crawl_results]
+            
+            for result in crawl_results:
                 if result.success:
                     markdown = result.markdown or ""
                     title = result.metadata.get("title", "") if result.metadata else ""

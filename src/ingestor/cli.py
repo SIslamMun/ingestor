@@ -198,13 +198,14 @@ def crawl(ctx: click.Context, url: str, **kwargs):
         console.print(f"Crawling: {url}")
         console.print(f"Strategy: {config.crawl_strategy}, Max depth: {config.crawl_max_depth}")
 
+        # Configure extractor with crawl settings
+        extractor.strategy = config.crawl_strategy
+        extractor.max_depth = config.crawl_max_depth
+        extractor.max_pages = config.crawl_max_pages
+
         count = 0
-        async for result in extractor.deep_crawl(
-            url,
-            strategy=config.crawl_strategy,
-            max_depth=config.crawl_max_depth,
-            max_pages=config.crawl_max_pages,
-        ):
+        results = await extractor.crawl_deep(url)
+        for result in results:
             try:
                 output_path = await writer.write(result)
                 count += 1
