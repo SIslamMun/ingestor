@@ -54,6 +54,7 @@ xls = ["pandas>=2.0.0", "xlrd>=2.0.0"]
 # Web
 web = ["crawl4ai>=0.7.8"]
 youtube = ["youtube-transcript-api>=1.2.0", "yt-dlp>=2024.0.0"]
+github = []  # Uses httpx from core dependencies
 
 # Audio
 audio = ["openai-whisper>=20231117"]
@@ -68,7 +69,7 @@ agent = ["anthropic>=0.39.0"]  # For Claude API integration
 
 # Bundles
 all-formats = [
-    "ingestor[docx,pptx,epub,xlsx,xls,web,youtube,audio,xml,csv]"
+    "ingestor[docx,pptx,epub,xlsx,xls,web,youtube,github,audio,xml,csv]"
 ]
 all = [
     "ingestor[all-formats,vlm,agent]"

@@ -23,6 +23,7 @@ class MediaType(Enum):
     # Web
     WEB = "web"
     YOUTUBE = "youtube"
+    GITHUB = "github"
 
     # Audio
     AUDIO = "audio"

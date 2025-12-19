@@ -67,6 +67,10 @@ class FileDetector:
         r"(?:https?://)?(?:www\.)?youtube\.com/playlist\?list=[\w-]+",
     ]
 
+    GITHUB_PATTERNS = [
+        r"^https?://(?:www\.)?github\.com/[^/]+/[^/]+(?:/.*)?$",
+    ]
+
     WEB_PATTERN = r"^https?://"
 
     def __init__(self):
@@ -94,6 +98,9 @@ class FileDetector:
         # Check for URLs first
         if self._is_youtube_url(source_str):
             return MediaType.YOUTUBE
+
+        if self._is_github_url(source_str):
+            return MediaType.GITHUB
 
         if self._is_web_url(source_str):
             return MediaType.WEB
@@ -171,6 +178,10 @@ class FileDetector:
     def _is_youtube_url(self, url: str) -> bool:
         """Check if URL is a YouTube video or playlist."""
         return any(re.match(pattern, url) for pattern in self.YOUTUBE_PATTERNS)
+
+    def _is_github_url(self, url: str) -> bool:
+        """Check if URL is a GitHub repository."""
+        return any(re.match(pattern, url) for pattern in self.GITHUB_PATTERNS)
 
     def _is_web_url(self, url: str) -> bool:
         """Check if string is a web URL."""

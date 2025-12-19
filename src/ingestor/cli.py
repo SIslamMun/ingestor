@@ -341,6 +341,12 @@ def _create_registry():
         pass
 
     try:
+        from .extractors.github.github_extractor import GitHubExtractor
+        registry.register(GitHubExtractor())
+    except ImportError:
+        pass
+
+    try:
         from .extractors.audio.audio_extractor import AudioExtractor
         registry.register(AudioExtractor())
     except ImportError:

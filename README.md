@@ -22,6 +22,7 @@ Uses Google Magika file detection.
 | Audio | .wav ✅  .mp3 🟡  .flac 🟡 | Whisper transcription |
 | Web | URLs ✅ | Deep crawling (Crawl4AI) |
 | YouTube | Videos ✅  Playlists ✅ | Transcripts |
+| GitHub | Repos ✅  Files ✅  Dirs ✅ | README, code, metadata |
 | Archives | .zip ✅ | Recursive extraction |
 
 ✅ = tested with real files
@@ -53,6 +54,7 @@ uv sync --extra docx        # Word documents
 uv sync --extra xlsx        # Excel files
 uv sync --extra web         # Web crawling
 uv sync --extra youtube     # YouTube transcripts
+uv sync --extra github      # GitHub repositories
 uv sync --extra audio       # Audio transcription
 ```
 
@@ -96,6 +98,18 @@ ingestor crawl https://example.com --strategy dfs --include "/blog/*"
 ```bash
 ingestor ingest "https://youtube.com/watch?v=..."
 ingestor ingest "https://youtube.com/playlist?list=..." --playlist
+```
+
+### GitHub
+```bash
+# Extract entire repository (README, metadata, key files)
+ingestor ingest "https://github.com/owner/repo" -o ./output
+
+# Extract a specific file
+ingestor ingest "https://github.com/owner/repo/blob/main/src/file.py" -o ./output
+
+# Extract a directory
+ingestor ingest "https://github.com/owner/repo/tree/main/src" -o ./output
 ```
 
 ## Output Structure
@@ -289,6 +303,7 @@ Input (file/URL)
 | Audio (.mp3, .wav) | openai-whisper | [GitHub](https://github.com/openai/whisper) |
 | Web (URLs) | crawl4ai | [GitHub](https://github.com/unclecode/crawl4ai) |
 | YouTube | yt-dlp + youtube-transcript-api | [yt-dlp](https://github.com/yt-dlp/yt-dlp), [transcript-api](https://github.com/jdepoix/youtube-transcript-api) |
+| GitHub | httpx (built-in) | Uses GitHub REST API |
 | Archives (.zip) | zipfile (built-in) | - |
 
 ### How Detection Works
