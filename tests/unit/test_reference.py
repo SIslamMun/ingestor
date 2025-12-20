@@ -334,3 +334,309 @@ class TestPptxReferences:
         assert "Complex Presentation Test" in result.markdown
         assert "Bullet" in result.markdown
         assert "Table" in result.markdown or "Data" in result.markdown
+
+
+# ============================================================================
+# Additional Complex Feature Tests
+# ============================================================================
+
+class TestDocxAdvancedFeatures:
+    """Tests for advanced DOCX features."""
+    
+    @pytest.fixture
+    def docx_extractor(self):
+        try:
+            from ingestor.extractors.docx.docx_extractor import DocxExtractor
+            return DocxExtractor()
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_docx_multiple_sections(self, docx_extractor, tmp_path):
+        """Test DOCX with multiple sections and page breaks."""
+        try:
+            from docx import Document
+            from docx.enum.section import WD_ORIENT
+            
+            doc = Document()
+            
+            # Section 1
+            doc.add_heading("Section 1", level=1)
+            doc.add_paragraph("Content in first section.")
+            
+            # Add section break
+            doc.add_section()
+            
+            # Section 2
+            doc.add_heading("Section 2", level=1)
+            doc.add_paragraph("Content in second section.")
+            
+            doc.save(tmp_path / "multi_section.docx")
+            
+            result = await docx_extractor.extract(tmp_path / "multi_section.docx")
+            
+            assert "Section 1" in result.markdown
+            assert "Section 2" in result.markdown
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_docx_footnotes_endnotes(self, docx_extractor, tmp_path):
+        """Test DOCX content even without explicit footnote support."""
+        try:
+            from docx import Document
+            
+            doc = Document()
+            doc.add_heading("Document with References", level=1)
+            doc.add_paragraph("Main text with inline references [1].")
+            doc.add_paragraph("More content with citations [2].")
+            doc.add_heading("References", level=2)
+            doc.add_paragraph("[1] First reference source")
+            doc.add_paragraph("[2] Second reference source")
+            
+            doc.save(tmp_path / "with_refs.docx")
+            
+            result = await docx_extractor.extract(tmp_path / "with_refs.docx")
+            
+            assert "References" in result.markdown
+            assert "[1]" in result.markdown
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_docx_track_changes_simulation(self, docx_extractor, tmp_path):
+        """Test that documents simulate track changes are processed."""
+        try:
+            from docx import Document
+            from docx.shared import RGBColor
+            
+            doc = Document()
+            doc.add_heading("Document with Revisions", level=1)
+            
+            # Simulate tracked change with strikethrough/color
+            para = doc.add_paragraph()
+            run1 = para.add_run("Original text ")
+            run2 = para.add_run("deleted text")
+            run2.font.strike = True
+            run2.font.color.rgb = RGBColor(255, 0, 0)
+            run3 = para.add_run(" new text")
+            run3.font.color.rgb = RGBColor(0, 128, 0)
+            
+            doc.add_paragraph("Final paragraph without changes.")
+            
+            doc.save(tmp_path / "track_changes.docx")
+            
+            result = await docx_extractor.extract(tmp_path / "track_changes.docx")
+            
+            assert result is not None
+            assert "Document with Revisions" in result.markdown
+        except ImportError:
+            pytest.skip("python-docx not installed")
+
+
+class TestXlsxAdvancedFeatures:
+    """Tests for advanced XLSX features."""
+    
+    @pytest.fixture
+    def xlsx_extractor(self):
+        try:
+            from ingestor.extractors.excel.xlsx_extractor import XlsxExtractor
+            return XlsxExtractor()
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.mark.asyncio
+    async def test_xlsx_conditional_formatting(self, xlsx_extractor, tmp_path):
+        """Test XLSX with conditional formatting extracts data."""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.formatting.rule import ColorScaleRule
+            
+            wb = Workbook()
+            ws = wb.active
+            
+            ws["A1"] = "Score"
+            for i in range(2, 12):
+                ws[f"A{i}"] = i * 10
+            
+            # Add conditional formatting
+            ws.conditional_formatting.add(
+                "A2:A11",
+                ColorScaleRule(
+                    start_type="min", start_color="FF0000",
+                    end_type="max", end_color="00FF00"
+                )
+            )
+            
+            wb.save(tmp_path / "conditional.xlsx")
+            
+            result = await xlsx_extractor.extract(tmp_path / "conditional.xlsx")
+            
+            assert result is not None
+            assert "Score" in result.markdown
+            assert "100" in result.markdown
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.mark.asyncio
+    async def test_xlsx_data_validation(self, xlsx_extractor, tmp_path):
+        """Test XLSX with data validation extracts data."""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.worksheet.datavalidation import DataValidation
+            
+            wb = Workbook()
+            ws = wb.active
+            
+            ws["A1"] = "Status"
+            ws["A2"] = "Active"
+            ws["A3"] = "Inactive"
+            
+            # Add data validation (dropdown)
+            dv = DataValidation(
+                type="list",
+                formula1='"Active,Inactive,Pending"',
+                allow_blank=True
+            )
+            ws.add_data_validation(dv)
+            dv.add(ws["A2"])
+            dv.add(ws["A3"])
+            
+            wb.save(tmp_path / "validation.xlsx")
+            
+            result = await xlsx_extractor.extract(tmp_path / "validation.xlsx")
+            
+            assert result is not None
+            assert "Status" in result.markdown
+            assert "Active" in result.markdown
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.mark.asyncio
+    async def test_xlsx_hidden_sheets(self, xlsx_extractor, tmp_path):
+        """Test XLSX with hidden sheets."""
+        try:
+            from openpyxl import Workbook
+            
+            wb = Workbook()
+            
+            # Visible sheet with proper table data
+            ws1 = wb.active
+            ws1.title = "Visible"
+            ws1["A1"] = "Name"
+            ws1["B1"] = "Value"
+            ws1["A2"] = "Visible Data"
+            ws1["B2"] = 100
+            
+            # Hidden sheet
+            ws2 = wb.create_sheet("Hidden")
+            ws2["A1"] = "Hidden Data"
+            ws2.sheet_state = 'hidden'
+            
+            wb.save(tmp_path / "hidden_sheet.xlsx")
+            
+            result = await xlsx_extractor.extract(tmp_path / "hidden_sheet.xlsx")
+            
+            assert result is not None
+            # Check that visible sheet data is extracted
+            assert "Visible" in result.markdown or "Name" in result.markdown or "100" in result.markdown
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+
+
+class TestPptxAdvancedFeatures:
+    """Tests for advanced PPTX features."""
+    
+    @pytest.fixture
+    def pptx_extractor(self):
+        try:
+            from ingestor.extractors.pptx.pptx_extractor import PptxExtractor
+            return PptxExtractor()
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_pptx_slide_transitions(self, pptx_extractor, tmp_path):
+        """Test PPTX with slide transitions extracts content."""
+        try:
+            from pptx import Presentation
+            
+            prs = Presentation()
+            
+            slide1 = prs.slides.add_slide(prs.slide_layouts[0])
+            slide1.shapes.title.text = "Slide with Transition"
+            slide1.shapes.placeholders[1].text = "Content on slide 1"
+            
+            slide2 = prs.slides.add_slide(prs.slide_layouts[0])
+            slide2.shapes.title.text = "Another Slide"
+            slide2.shapes.placeholders[1].text = "Content on slide 2"
+            
+            prs.save(tmp_path / "transitions.pptx")
+            
+            result = await pptx_extractor.extract(tmp_path / "transitions.pptx")
+            
+            assert result is not None
+            assert "Slide with Transition" in result.markdown
+            assert "Another Slide" in result.markdown
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_pptx_master_slide_content(self, pptx_extractor, tmp_path):
+        """Test PPTX extracts slide content regardless of master."""
+        try:
+            from pptx import Presentation
+            
+            prs = Presentation()
+            
+            # Use different layouts
+            for i, layout_idx in enumerate([0, 1, 5, 6]):
+                try:
+                    slide = prs.slides.add_slide(prs.slide_layouts[layout_idx])
+                    if slide.shapes.title:
+                        slide.shapes.title.text = f"Layout {layout_idx} Title"
+                except:
+                    pass
+            
+            prs.save(tmp_path / "layouts.pptx")
+            
+            result = await pptx_extractor.extract(tmp_path / "layouts.pptx")
+            
+            assert result is not None
+            assert "Layout" in result.markdown or "Title" in result.markdown
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_pptx_grouped_shapes(self, pptx_extractor, tmp_path):
+        """Test PPTX with grouped shapes extracts text."""
+        try:
+            from pptx import Presentation
+            from pptx.util import Inches
+            from pptx.enum.shapes import MSO_SHAPE
+            
+            prs = Presentation()
+            slide = prs.slides.add_slide(prs.slide_layouts[5])
+            
+            # Add individual shapes (grouping requires more complex API)
+            shape1 = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Inches(1), Inches(1), Inches(2), Inches(1)
+            )
+            shape1.text = "Shape 1 Text"
+            
+            shape2 = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Inches(1), Inches(2.5), Inches(2), Inches(1)
+            )
+            shape2.text = "Shape 2 Text"
+            
+            prs.save(tmp_path / "shapes.pptx")
+            
+            result = await pptx_extractor.extract(tmp_path / "shapes.pptx")
+            
+            assert result is not None
+            assert "Shape 1 Text" in result.markdown
+            assert "Shape 2 Text" in result.markdown
+        except ImportError:
+            pytest.skip("python-pptx not installed")

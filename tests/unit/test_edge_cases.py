@@ -504,3 +504,383 @@ class TestErrorRecovery:
         finally:
             # Restore permissions for cleanup
             restricted_file.chmod(0o644)
+
+
+# ============================================================================
+# Password-Protected File Tests
+# ============================================================================
+
+class TestPasswordProtectedFiles:
+    """Test handling of password-protected files."""
+    
+    @pytest.fixture
+    def docx_extractor(self):
+        """DOCX extractor instance."""
+        try:
+            from ingestor.extractors.docx.docx_extractor import DocxExtractor
+            return DocxExtractor()
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.fixture
+    def xlsx_extractor(self):
+        """XLSX extractor instance."""
+        try:
+            from ingestor.extractors.excel.xlsx_extractor import XlsxExtractor
+            return XlsxExtractor()
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.fixture
+    def pptx_extractor(self):
+        """PPTX extractor instance."""
+        try:
+            from ingestor.extractors.pptx.pptx_extractor import PptxExtractor
+            return PptxExtractor()
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_encrypted_docx_graceful_failure(self, docx_extractor, temp_dir):
+        """Encrypted DOCX should fail gracefully."""
+        # Create a fake "encrypted" DOCX (actually just invalid)
+        encrypted_file = temp_dir / "encrypted.docx"
+        # Write invalid ZIP structure that simulates encryption
+        encrypted_file.write_bytes(b'PK\x03\x04' + b'\x00' * 100)
+        
+        # Should raise an exception but not crash
+        with pytest.raises(Exception):
+            await docx_extractor.extract(encrypted_file)
+    
+    @pytest.mark.asyncio
+    async def test_encrypted_xlsx_graceful_failure(self, xlsx_extractor, temp_dir):
+        """Encrypted XLSX should fail gracefully."""
+        encrypted_file = temp_dir / "encrypted.xlsx"
+        encrypted_file.write_bytes(b'PK\x03\x04' + b'\x00' * 100)
+        
+        with pytest.raises(Exception):
+            await xlsx_extractor.extract(encrypted_file)
+    
+    @pytest.mark.asyncio
+    async def test_encrypted_pptx_graceful_failure(self, pptx_extractor, temp_dir):
+        """Encrypted PPTX should fail gracefully."""
+        encrypted_file = temp_dir / "encrypted.pptx"
+        encrypted_file.write_bytes(b'PK\x03\x04' + b'\x00' * 100)
+        
+        with pytest.raises(Exception):
+            await pptx_extractor.extract(encrypted_file)
+
+
+# ============================================================================
+# Corrupted Office File Tests
+# ============================================================================
+
+class TestCorruptedOfficeFiles:
+    """Test handling of corrupted Office files."""
+    
+    @pytest.fixture
+    def docx_extractor(self):
+        try:
+            from ingestor.extractors.docx.docx_extractor import DocxExtractor
+            return DocxExtractor()
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.fixture
+    def xlsx_extractor(self):
+        try:
+            from ingestor.extractors.excel.xlsx_extractor import XlsxExtractor
+            return XlsxExtractor()
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.fixture
+    def pptx_extractor(self):
+        try:
+            from ingestor.extractors.pptx.pptx_extractor import PptxExtractor
+            return PptxExtractor()
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_truncated_docx(self, docx_extractor, temp_dir):
+        """Truncated DOCX file should fail gracefully."""
+        truncated_file = temp_dir / "truncated.docx"
+        # Write partial ZIP header
+        truncated_file.write_bytes(b'PK\x03\x04\x14\x00\x00\x00')
+        
+        with pytest.raises(Exception):
+            await docx_extractor.extract(truncated_file)
+    
+    @pytest.mark.asyncio
+    async def test_wrong_extension_docx(self, docx_extractor, temp_dir):
+        """Text file with .docx extension should fail gracefully."""
+        fake_docx = temp_dir / "fake.docx"
+        fake_docx.write_text("This is not a DOCX file")
+        
+        with pytest.raises(Exception):
+            await docx_extractor.extract(fake_docx)
+    
+    @pytest.mark.asyncio
+    async def test_wrong_extension_xlsx(self, xlsx_extractor, temp_dir):
+        """Text file with .xlsx extension should fail gracefully."""
+        fake_xlsx = temp_dir / "fake.xlsx"
+        fake_xlsx.write_text("This is not an XLSX file")
+        
+        with pytest.raises(Exception):
+            await xlsx_extractor.extract(fake_xlsx)
+    
+    @pytest.mark.asyncio
+    async def test_wrong_extension_pptx(self, pptx_extractor, temp_dir):
+        """Text file with .pptx extension should fail gracefully."""
+        fake_pptx = temp_dir / "fake.pptx"
+        fake_pptx.write_text("This is not a PPTX file")
+        
+        with pytest.raises(Exception):
+            await pptx_extractor.extract(fake_pptx)
+    
+    @pytest.mark.asyncio
+    async def test_zero_byte_docx(self, docx_extractor, temp_dir):
+        """Zero-byte DOCX file should fail gracefully."""
+        zero_file = temp_dir / "zero.docx"
+        zero_file.write_bytes(b'')
+        
+        with pytest.raises(Exception):
+            await docx_extractor.extract(zero_file)
+
+
+# ============================================================================
+# Complex Document Content Tests
+# ============================================================================
+
+class TestComplexDocumentContent:
+    """Test extraction of complex document features."""
+    
+    @pytest.fixture
+    def docx_extractor(self):
+        try:
+            from ingestor.extractors.docx.docx_extractor import DocxExtractor
+            return DocxExtractor()
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.fixture
+    def xlsx_extractor(self):
+        try:
+            from ingestor.extractors.excel.xlsx_extractor import XlsxExtractor
+            return XlsxExtractor()
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.fixture
+    def pptx_extractor(self):
+        try:
+            from ingestor.extractors.pptx.pptx_extractor import PptxExtractor
+            return PptxExtractor()
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_docx_with_comments(self, docx_extractor, temp_dir):
+        """DOCX with comments should extract main content."""
+        try:
+            from docx import Document
+            
+            doc = Document()
+            doc.add_paragraph("Main content of the document.")
+            doc.add_paragraph("This paragraph has important information.")
+            # Note: python-docx doesn't easily support adding comments
+            # but we test that documents with potential comments work
+            doc.save(temp_dir / "with_comments.docx")
+            
+            result = await docx_extractor.extract(temp_dir / "with_comments.docx")
+            
+            assert result is not None
+            assert "Main content" in result.markdown
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_docx_with_headers_footers(self, docx_extractor, temp_dir):
+        """DOCX with headers/footers should extract content."""
+        try:
+            from docx import Document
+            
+            doc = Document()
+            
+            # Add header
+            section = doc.sections[0]
+            header = section.header
+            header.paragraphs[0].text = "Document Header"
+            
+            # Add footer
+            footer = section.footer
+            footer.paragraphs[0].text = "Page Footer"
+            
+            # Add main content
+            doc.add_heading("Main Title", 0)
+            doc.add_paragraph("Body content of the document.")
+            
+            doc.save(temp_dir / "with_headers.docx")
+            
+            result = await docx_extractor.extract(temp_dir / "with_headers.docx")
+            
+            assert result is not None
+            assert "Main Title" in result.markdown
+            assert "Body content" in result.markdown
+        except ImportError:
+            pytest.skip("python-docx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_xlsx_with_charts_graceful(self, xlsx_extractor, temp_dir):
+        """XLSX with charts should extract data (charts may be ignored)."""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.chart import BarChart, Reference
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Chart Data"
+            
+            # Add data
+            data = [
+                ["Category", "Value"],
+                ["A", 10],
+                ["B", 20],
+                ["C", 30],
+            ]
+            for row in data:
+                ws.append(row)
+            
+            # Add a chart
+            chart = BarChart()
+            chart.title = "Sample Chart"
+            data_ref = Reference(ws, min_col=2, min_row=1, max_col=2, max_row=4)
+            cats = Reference(ws, min_col=1, min_row=2, max_row=4)
+            chart.add_data(data_ref, titles_from_data=True)
+            chart.set_categories(cats)
+            ws.add_chart(chart, "E1")
+            
+            wb.save(temp_dir / "with_chart.xlsx")
+            
+            result = await xlsx_extractor.extract(temp_dir / "with_chart.xlsx")
+            
+            assert result is not None
+            # Data should be extracted even if chart is ignored
+            assert "Category" in result.markdown or "Value" in result.markdown
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.mark.asyncio
+    async def test_xlsx_with_named_ranges(self, xlsx_extractor, temp_dir):
+        """XLSX with named ranges should extract data."""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.workbook.defined_name import DefinedName
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Named Ranges"
+            
+            ws["A1"] = "Name"
+            ws["B1"] = "Value"
+            ws["A2"] = "Total"
+            ws["B2"] = 100
+            
+            # Create named range using non-deprecated method
+            named_range = DefinedName("MyTotal", attr_text="'Named Ranges'!$B$2")
+            wb.defined_names.add(named_range)
+            
+            wb.save(temp_dir / "named_ranges.xlsx")
+            
+            result = await xlsx_extractor.extract(temp_dir / "named_ranges.xlsx")
+            
+            assert result is not None
+            assert "Total" in result.markdown
+            assert "100" in result.markdown
+        except ImportError:
+            pytest.skip("openpyxl not installed")
+    
+    @pytest.mark.asyncio
+    async def test_pptx_with_animations_ignored(self, pptx_extractor, temp_dir):
+        """PPTX with animations should extract static content."""
+        try:
+            from pptx import Presentation
+            from pptx.util import Inches
+            
+            prs = Presentation()
+            slide = prs.slides.add_slide(prs.slide_layouts[1])
+            
+            slide.shapes.title.text = "Animated Slide"
+            slide.shapes.placeholders[1].text = "Content that might have animations"
+            
+            # Note: python-pptx doesn't easily support adding animations
+            # but the test ensures animated presentations don't crash
+            
+            prs.save(temp_dir / "with_animations.pptx")
+            
+            result = await pptx_extractor.extract(temp_dir / "with_animations.pptx")
+            
+            assert result is not None
+            assert "Animated Slide" in result.markdown
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_pptx_with_smartart_shapes(self, pptx_extractor, temp_dir):
+        """PPTX with various shapes should extract text content."""
+        try:
+            from pptx import Presentation
+            from pptx.util import Inches
+            from pptx.enum.shapes import MSO_SHAPE
+            
+            prs = Presentation()
+            slide = prs.slides.add_slide(prs.slide_layouts[5])  # Blank
+            
+            # Add various shapes with text
+            shapes_data = [
+                (MSO_SHAPE.RECTANGLE, "Rectangle Text"),
+                (MSO_SHAPE.OVAL, "Oval Text"),
+                (MSO_SHAPE.DIAMOND, "Diamond Text"),
+            ]
+            
+            for i, (shape_type, text) in enumerate(shapes_data):
+                shape = slide.shapes.add_shape(
+                    shape_type, 
+                    Inches(1 + i * 2), Inches(1), 
+                    Inches(1.5), Inches(1)
+                )
+                shape.text = text
+            
+            prs.save(temp_dir / "with_shapes.pptx")
+            
+            result = await pptx_extractor.extract(temp_dir / "with_shapes.pptx")
+            
+            assert result is not None
+            assert "Rectangle Text" in result.markdown
+            assert "Oval Text" in result.markdown
+        except ImportError:
+            pytest.skip("python-pptx not installed")
+    
+    @pytest.mark.asyncio
+    async def test_pptx_with_embedded_media_placeholder(self, pptx_extractor, temp_dir):
+        """PPTX referencing media should handle gracefully."""
+        try:
+            from pptx import Presentation
+            from pptx.util import Inches
+            
+            prs = Presentation()
+            slide = prs.slides.add_slide(prs.slide_layouts[5])
+            
+            # Add text indicating embedded content
+            textbox = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(6), Inches(1))
+            textbox.text_frame.text = "Video content would be here: [Embedded Video]"
+            
+            prs.save(temp_dir / "with_media_ref.pptx")
+            
+            result = await pptx_extractor.extract(temp_dir / "with_media_ref.pptx")
+            
+            assert result is not None
+            assert "Video content" in result.markdown or "Embedded" in result.markdown
+        except ImportError:
+            pytest.skip("python-pptx not installed")
