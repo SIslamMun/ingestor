@@ -1,0 +1,10 @@
+# Special Characters
+
+Quotes: "double" and 'single'
+Ampersand: &
+Less/Greater: < >
+Backslash: \
+Pipe: |
+Asterisks: * ** ***
+Underscores: _ __ ___
+Backticks: ` `` ```

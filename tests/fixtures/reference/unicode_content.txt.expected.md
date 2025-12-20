@@ -1,0 +1,6 @@
+# Unicode Test
+
+こんにちは (Japanese)
+مرحبا (Arabic)
+Привет (Russian)
+🎉 Emoji support 🚀

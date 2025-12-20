@@ -260,6 +260,9 @@ uv run playwright install chromium
 # All tests (run fixture generation first!)
 uv run pytest
 
+# Unit tests only (fast, no network)
+uv run pytest tests/unit -v
+
 # With network tests (web crawling, YouTube)
 uv run pytest --network
 
@@ -269,6 +272,18 @@ uv run pytest -m "not skip_audio"
 # With coverage
 uv run pytest --cov=ingestor
 ```
+
+### Test Categories
+
+The test suite includes 268+ tests across several categories:
+
+| Category | Description | Count |
+|----------|-------------|-------|
+| **Unit Tests** | Core functionality | 175+ |
+| - Edge Cases | Empty files, unicode, malformed data | 30 |
+| - Performance | Speed benchmarks, memory tests | 19 |
+| - Reference | Regression tests with known outputs | 11 |
+| **Integration** | Real file extraction | 93+ |
 
 **Note:** Web crawling uses [Crawl4AI](https://github.com/unclecode/crawl4ai) which requires Playwright browsers. If you skip the `playwright install` step, web tests will be skipped with a helpful message.
 
