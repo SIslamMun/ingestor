@@ -674,7 +674,15 @@ class GitExtractor(BaseExtractor):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            await checkout_process.communicate()
+            checkout_stdout, checkout_stderr = await checkout_process.communicate()
+
+            if checkout_process.returncode != 0:
+                error_msg = checkout_stderr.decode("utf-8", errors="replace")
+                if self.token:
+                    error_msg = error_msg.replace(self.token, "[TOKEN]")
+                raise Exception(
+                    f"Git checkout failed for commit '{self.config.commit}': {error_msg}"
+                )
 
     async def _extract_from_local_repo(
         self, repo_path: Path, source: str

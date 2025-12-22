@@ -145,6 +145,32 @@ ingestor clone https://github.com/owner/repo --submodules
 ingestor clone https://github.com/owner/repo --max-files 100 --max-file-size 100000
 ```
 
+#### Private Repository Authentication
+
+For **SSH URLs** (`git@github.com:...`), authentication uses your SSH keys automatically.
+
+For **HTTPS URLs** with private repositories, use the `--token` flag:
+
+```bash
+# Using GitHub Personal Access Token (PAT)
+export GITHUB_TOKEN="ghp_your_token_here"
+ingestor clone https://github.com/owner/private-repo --token $GITHUB_TOKEN
+
+# Or inline
+ingestor clone https://github.com/owner/private-repo --token "ghp_your_token"
+```
+
+**How it works:** The token is injected into the HTTPS URL for authentication:
+- Original: `https://github.com/owner/repo`
+- With token: `https://<token>@github.com/owner/repo`
+
+**Token Requirements:**
+- GitHub: Create a [Personal Access Token](https://github.com/settings/tokens) with `repo` scope
+- GitLab: Create a [Project Access Token](https://docs.gitlab.com/ee/user/project/settings/project_access_tokens.html)
+- Bitbucket: Create an [App Password](https://support.atlassian.com/bitbucket-cloud/docs/app-passwords/)
+
+**Security Note:** Tokens are automatically redacted from error messages to prevent accidental exposure.
+
 #### Bulk Repository Cloning (.download_git files)
 
 Create a `.download_git` file with repository URLs (one per line):
