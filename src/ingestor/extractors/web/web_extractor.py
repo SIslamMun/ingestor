@@ -93,8 +93,12 @@ class WebExtractor(BaseExtractor):
             # Extract title
             title = result.metadata.get("title", urlparse(url).netloc) if result.metadata else urlparse(url).netloc
 
-            # Extract images
-            images = self._extract_images(result)
+            # Extract images and get URL mapping
+            images, image_url_map = self._extract_images(result)
+            
+            # Rewrite image paths in markdown to point to extracted images
+            if image_url_map:
+                markdown = self._rewrite_image_paths(markdown, image_url_map)
 
             return ExtractionResult(
                 markdown=markdown,
@@ -162,7 +166,11 @@ class WebExtractor(BaseExtractor):
                 if result.success:
                     markdown = result.markdown or ""
                     title = result.metadata.get("title", "") if result.metadata else ""
-                    images = self._extract_images(result)
+                    images, image_url_map = self._extract_images(result)
+                    
+                    # Rewrite image paths
+                    if image_url_map:
+                        markdown = self._rewrite_image_paths(markdown, image_url_map)
 
                     results.append(ExtractionResult(
                         markdown=markdown,
@@ -204,6 +212,7 @@ class WebExtractor(BaseExtractor):
             List of extracted images
         """
         images = []
+        image_url_map = {}  # Map original URLs to new filenames
 
         if hasattr(result, "media") and result.media:
             img_data = result.media.get("images", [])
@@ -217,16 +226,56 @@ class WebExtractor(BaseExtractor):
                         if ext == "jpg":
                             ext = "jpeg"
 
+                        filename = f"web_image_{i+1}.{ext}"
+                        
                         images.append(ExtractedImage(
-                            filename=f"web_image_{i+1}.{ext}",
+                            filename=filename,
                             data=data,
                             format=ext,
                             context=img.get("alt", ""),
                         ))
+                        
+                        # Map original URL to new filename
+                        if img.get("src"):
+                            image_url_map[img["src"]] = filename
                     except Exception:
                         pass
 
-        return images
+        return images, image_url_map
+
+    def _rewrite_image_paths(self, markdown: str, image_url_map: dict) -> str:
+        """Rewrite image URLs in markdown to point to extracted images.
+
+        Args:
+            markdown: Original markdown from Crawl4AI
+            image_url_map: Mapping of original URLs to new filenames
+
+        Returns:
+            Markdown with rewritten image paths
+        """
+        import re
+        
+        # Pattern to match markdown images: ![alt](url)
+        img_pattern = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
+        
+        def replace_url(match):
+            alt_text = match.group(1)
+            original_url = match.group(2)
+            
+            # Check if we have this image extracted
+            if original_url in image_url_map:
+                return f"![{alt_text}](./img/{image_url_map[original_url]})"
+            
+            # Try matching just the filename part
+            url_filename = original_url.split("/")[-1].split("?")[0]
+            for url, filename in image_url_map.items():
+                if url.endswith(url_filename):
+                    return f"![{alt_text}](./img/{filename})"
+            
+            # Keep original if we don't have it extracted
+            return match.group(0)
+        
+        return img_pattern.sub(replace_url, markdown)
 
     def supports(self, source: Union[str, Path]) -> bool:
         """Check if this extractor handles the source.

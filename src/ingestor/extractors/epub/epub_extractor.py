@@ -1,7 +1,8 @@
 """EPUB ebook extractor using ebooklib."""
 
+import re
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Union
 
 from markdownify import markdownify
 
@@ -13,6 +14,7 @@ class EpubExtractor(BaseExtractor):
     """Extract content and images from EPUB ebooks.
 
     Uses ebooklib for EPUB2/EPUB3 support.
+    Images are extracted and paths in markdown are rewritten to ./img/filename.
     """
 
     media_type = MediaType.EPUB
@@ -33,6 +35,9 @@ class EpubExtractor(BaseExtractor):
 
         chapters = []
         images: List[ExtractedImage] = []
+        
+        # Build image path mapping: original_path -> new_filename
+        image_map: Dict[str, str] = {}
 
         # Extract metadata
         title = None
@@ -45,6 +50,40 @@ class EpubExtractor(BaseExtractor):
         if author_meta:
             author = author_meta[0][0]
 
+        # Extract images first and build path mapping
+        for item in book.get_items_of_type(ITEM_IMAGE):
+            try:
+                original_path = item.get_name()  # e.g., "OEBPS/images/fig1.png" or "images/fig1.png"
+                filename = original_path.split("/")[-1]  # Get just the filename
+                media_type_str = item.media_type  # e.g., "image/jpeg"
+                ext = media_type_str.split("/")[-1] if "/" in media_type_str else "png"
+                if ext == "jpg":
+                    ext = "jpeg"
+
+                # Create unique filename if needed
+                if filename in [img.filename for img in images]:
+                    base, extension = filename.rsplit(".", 1) if "." in filename else (filename, ext)
+                    filename = f"{base}_{len(images)+1}.{extension}"
+
+                images.append(ExtractedImage(
+                    filename=filename,
+                    data=item.get_content(),
+                    format=ext,
+                ))
+                
+                # Map all possible path variations to new filename
+                # EPUB image refs can be relative: ../images/fig.png, images/fig.png, fig.png
+                image_map[original_path] = filename
+                image_map[original_path.split("/")[-1]] = filename  # Just filename
+                # Handle relative paths from chapter directories
+                for i in range(len(original_path.split("/"))):
+                    partial = "/".join(original_path.split("/")[i:])
+                    image_map[partial] = filename
+                    image_map["../" + partial] = filename
+                    
+            except Exception:
+                pass
+
         # Extract chapters/documents
         for item in book.get_items_of_type(ITEM_DOCUMENT):
             try:
@@ -52,25 +91,12 @@ class EpubExtractor(BaseExtractor):
                 # Convert HTML to markdown
                 md = markdownify(content, heading_style="ATX", strip=["script", "style"])
                 md = self._clean_markdown(md)
+                
+                # Rewrite image paths to point to ./img/
+                md = self._rewrite_image_paths(md, image_map)
+                
                 if md.strip():
                     chapters.append(md)
-            except Exception:
-                pass
-
-        # Extract images (always)
-        for item in book.get_items_of_type(ITEM_IMAGE):
-            try:
-                filename = item.get_name().split("/")[-1]
-                media_type = item.media_type  # e.g., "image/jpeg"
-                ext = media_type.split("/")[-1] if "/" in media_type else "png"
-                if ext == "jpg":
-                    ext = "jpeg"
-
-                images.append(ExtractedImage(
-                    filename=filename,
-                    data=item.get_content(),
-                    format=ext,
-                ))
             except Exception:
                 pass
 
@@ -96,6 +122,42 @@ class EpubExtractor(BaseExtractor):
                 "image_count": len(images),
             },
         )
+
+    def _rewrite_image_paths(self, markdown: str, image_map: Dict[str, str]) -> str:
+        """Rewrite image paths in markdown to point to ./img/.
+
+        Args:
+            markdown: Markdown content with original image refs
+            image_map: Mapping of original paths to new filenames
+
+        Returns:
+            Markdown with rewritten image paths
+        """
+        # Pattern to match markdown images: ![alt](path)
+        img_pattern = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
+        
+        def replace_path(match):
+            alt_text = match.group(1)
+            original_path = match.group(2)
+            
+            # Try to find the image in our map
+            # Clean up the path (remove URL encoding, etc.)
+            clean_path = original_path.replace("%20", " ")
+            
+            # Try various path forms
+            new_filename = None
+            for path_variant in [clean_path, clean_path.split("/")[-1], original_path]:
+                if path_variant in image_map:
+                    new_filename = image_map[path_variant]
+                    break
+            
+            if new_filename:
+                return f"![{alt_text}](./img/{new_filename})"
+            else:
+                # Keep original if we can't find it
+                return match.group(0)
+        
+        return img_pattern.sub(replace_path, markdown)
 
     def _clean_markdown(self, markdown: str) -> str:
         """Clean up markdown output.

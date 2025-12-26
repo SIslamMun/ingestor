@@ -156,6 +156,7 @@ class TestMalformedFiles:
     @pytest.mark.asyncio
     async def test_invalid_xml(self, xml_extractor, temp_dir):
         """Invalid XML should raise ParseError."""
+        pytest.importorskip("defusedxml", reason="defusedxml not installed")
         import xml.etree.ElementTree as ET
         invalid_file = temp_dir / "invalid.xml"
         invalid_file.write_text("<root><unclosed>")

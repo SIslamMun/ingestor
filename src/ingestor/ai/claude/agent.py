@@ -3,7 +3,13 @@
 from pathlib import Path
 from typing import Optional
 
-from ...types import ExtractionResult
+from ...types import ExtractionResult, ExtractedImage
+from ...postprocess.orphan_images import (
+    detect_orphan_images,
+    recover_orphan_images,
+    suggest_image_placements,
+    smart_insert_images,
+)
 
 
 class ClaudeAgent:
@@ -175,6 +181,131 @@ Guidelines:
 
         return response.strip()
 
+    async def recover_orphan_images(
+        self,
+        markdown: str,
+        image_filenames: list[str],
+        image_dir: str = "./img",
+        use_ai: bool = True,
+    ) -> str:
+        """Detect and recover orphan images in markdown.
+
+        First detects images that were extracted but not referenced,
+        then either uses Claude for intelligent placement or falls
+        back to heuristic placement.
+
+        Args:
+            markdown: The markdown content
+            image_filenames: List of extracted image filenames
+            image_dir: Image directory path
+            use_ai: If True, use Claude for intelligent placement
+
+        Returns:
+            Markdown with orphan images inserted
+        """
+        # Detect orphans
+        result = detect_orphan_images(markdown, image_filenames, image_dir)
+
+        if not result.has_orphans:
+            return markdown
+
+        if use_ai:
+            try:
+                # Use Claude for intelligent placement
+                return await self._ai_place_images(
+                    markdown, result.orphan_images, image_dir
+                )
+            except Exception:
+                # Fall back to heuristic placement
+                pass
+
+        # Use smart heuristic placement
+        return smart_insert_images(markdown, result.orphan_images, image_dir)
+
+    async def _ai_place_images(
+        self,
+        markdown: str,
+        orphan_images: list[str],
+        image_dir: str = "./img",
+    ) -> str:
+        """Use Claude to intelligently place orphan images.
+
+        Args:
+            markdown: The markdown content
+            orphan_images: List of orphan image filenames
+            image_dir: Image directory path
+
+        Returns:
+            Markdown with images placed by Claude
+        """
+        sdk = self._get_sdk()
+
+        prompt = suggest_image_placements(markdown, orphan_images)
+
+        system = """You are an expert at document structure and image placement.
+Your task is to insert image references into markdown at the most appropriate positions.
+Consider:
+1. Figure captions and references in the text
+2. Section topics and content relevance
+3. Natural reading flow
+4. Original document structure clues
+
+Return ONLY the complete modified markdown with images inserted.
+Use format: ![Descriptive Alt Text](./img/filename.ext)"""
+
+        response = await sdk.query(prompt=prompt, system=system)
+
+        # Extract markdown from response
+        cleaned = response.strip()
+        if cleaned.startswith("```markdown"):
+            cleaned = cleaned[11:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+
+        return cleaned.strip()
+
+    async def cleanup_result_with_images(
+        self,
+        result: ExtractionResult,
+        recover_orphans: bool = True,
+    ) -> ExtractionResult:
+        """Clean up extraction result and recover orphan images.
+
+        Enhanced version of cleanup_result that also handles
+        orphan image detection and recovery.
+
+        Args:
+            result: Extraction result to process
+            recover_orphans: Whether to detect and insert orphan images
+
+        Returns:
+            Processed result with cleaned markdown and recovered images
+        """
+        markdown = result.markdown
+        context = f"Source: {result.source}, Type: {result.media_type.value if result.media_type else 'unknown'}"
+
+        # First, recover orphan images if requested
+        if recover_orphans and result.images:
+            image_filenames = [img.filename for img in result.images]
+            markdown = await self.recover_orphan_images(
+                markdown, image_filenames, "./img", use_ai=True
+            )
+
+        # Then clean up the markdown
+        cleaned_markdown = await self.cleanup(markdown, context=context)
+
+        return ExtractionResult(
+            markdown=cleaned_markdown,
+            title=result.title,
+            source=result.source,
+            media_type=result.media_type,
+            images=result.images,
+            metadata=result.metadata,
+            charset=result.charset,
+        )
+
 
 async def cleanup_markdown(
     content: str,
@@ -191,3 +322,24 @@ async def cleanup_markdown(
     """
     agent = ClaudeAgent()
     return await agent.cleanup(content, context)
+
+
+async def recover_orphan_images_with_ai(
+    markdown: str,
+    image_filenames: list[str],
+    image_dir: str = "./img",
+) -> str:
+    """Convenience function to recover orphan images using Claude.
+
+    Args:
+        markdown: Markdown content
+        image_filenames: List of extracted image filenames
+        image_dir: Image directory path
+
+    Returns:
+        Markdown with orphan images inserted
+    """
+    agent = ClaudeAgent()
+    return await agent.recover_orphan_images(
+        markdown, image_filenames, image_dir, use_ai=True
+    )

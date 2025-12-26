@@ -153,10 +153,11 @@ class TestYouTubeExtractorCanExtract:
 
 
 class TestYouTubeExtractorRealExtraction:
-    """Real extraction tests (requires network)."""
+    """Real extraction tests (requires network and yt_dlp)."""
 
     @pytest.fixture
     def extractor(self):
+        pytest.importorskip("yt_dlp", reason="yt_dlp not installed")
         return YouTubeExtractor()
 
     @pytest.mark.asyncio
