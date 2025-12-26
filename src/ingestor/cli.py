@@ -358,20 +358,186 @@ def describe(input: str, vlm_model: str, ollama_host: str, verbose: bool):
 
 
 @main.command()
+@click.argument("query", type=str)
+@click.option("-o", "--output", type=click.Path(), default="./output", help="Output directory")
+@click.option("--format", "output_format", type=str, default=None, help="Output format instructions")
+@click.option("--no-stream", is_flag=True, help="Disable streaming (use polling)")
+@click.option("--max-wait", type=int, default=3600, help="Max wait time in seconds (default: 3600)")
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.pass_context
+def research(ctx: click.Context, query: str, output: str, output_format: str,
+             no_stream: bool, max_wait: int, verbose: bool):
+    """Conduct deep research using Gemini Deep Research Agent.
+    
+    QUERY is the research topic or question.
+    
+    Requires GOOGLE_API_KEY environment variable.
+    
+    Examples:
+    
+        ingestor research "What are the latest advances in quantum computing?"
+        
+        ingestor research "Compare transformer architectures" --format "Include comparison table"
+    """
+    async def run():
+        try:
+            from .researcher import DeepResearcher, ResearchConfig
+        except ImportError as e:
+            console.print(f"[red]Error:[/red] Researcher dependencies not installed: {e}")
+            console.print("Install with: pip install google-genai")
+            raise SystemExit(1)
+        
+        output_path = Path(output)
+        
+        # Configure research
+        config = ResearchConfig(
+            output_format=output_format,
+            max_wait_time=max_wait,
+            enable_streaming=not no_stream,
+            enable_thinking=verbose,
+        )
+        
+        researcher = DeepResearcher(config=config)
+        
+        # Progress callback
+        def on_progress(text: str):
+            if verbose:
+                if text.startswith("[Thinking]"):
+                    console.print(f"[dim]{text}[/dim]")
+                else:
+                    console.print(text, end="")
+        
+        with Progress(
+            SpinnerColumn(spinner_name=_SPINNER),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+            transient=True,
+        ) as progress:
+            task = progress.add_task(f"Researching: {query[:50]}...", total=None)
+            
+            try:
+                result = await researcher.research(query, on_progress=on_progress if verbose else None)
+            except Exception as e:
+                console.print(f"\n[red]Error:[/red] {e}")
+                raise SystemExit(1)
+        
+        if result.succeeded:
+            # Save results
+            result.save(output_path / "research")
+            
+            console.print(f"\n[green]Research completed![/green]")
+            console.print(f"Duration: {result.duration_seconds:.1f}s")
+            console.print(f"Report saved to: {output_path / 'research' / 'research_report.md'}")
+            
+            # Print summary
+            if verbose:
+                console.print(f"\n[bold]Report Preview:[/bold]")
+                preview = result.report[:500] + "..." if len(result.report) > 500 else result.report
+                console.print(preview)
+        else:
+            console.print(f"\n[red]Research failed:[/red] {result.error}")
+            raise SystemExit(1)
+    
+    asyncio.run(run())
+
+
+@main.command(name="parse-refs")
+@click.argument("input", type=click.Path(exists=True))
+@click.option("-o", "--output-dir", type=click.Path(), default=None, help="Output directory for reference files (default: same as input)")
+def parse_refs(input: str, output_dir: str):
+    """Extract references from a research document.
+    
+    Takes a research document and generates a list of PDFs, websites,
+    citations, git repos, YouTube videos, podcasts, books, etc.
+    
+    Automatically generates both JSON and Markdown output files.
+    
+    INPUT is a research report (markdown, json, or text file).
+    
+    Examples:
+    
+        ingestor parse-refs research_report.md
+        
+        ingestor parse-refs research.md -o ./refs/
+    """
+    import json
+    
+    try:
+        from .researcher import ResearchParser
+    except ImportError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+    
+    input_path = Path(input)
+    parser = ResearchParser()
+    
+    refs = parser.parse_file(input_path)
+    
+    if not refs:
+        console.print("[yellow]No references found.[/yellow]")
+        return
+    
+    # Determine output directory
+    if output_dir:
+        out_dir = Path(output_dir)
+    else:
+        out_dir = input_path.parent
+    
+    out_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate output filenames based on input
+    base_name = input_path.stem.replace("_report", "").replace("research", "references")
+    if base_name == input_path.stem:
+        base_name = f"{input_path.stem}_references"
+    
+    json_path = out_dir / f"{base_name}.json"
+    md_path = out_dir / f"{base_name}.md"
+    
+    # Group by type for stats
+    grouped = parser.group_by_type(refs)
+    
+    console.print(f"[bold green]✓ Extracted {len(refs)} references:[/bold green]\n")
+    for ref_type, type_refs in grouped.items():
+        console.print(f"  • {ref_type.value}: {len(type_refs)}")
+    
+    # Generate JSON output
+    data = []
+    for ref in refs:
+        data.append({
+            "type": ref.type.value,
+            "value": ref.value,
+            "title": ref.title,
+            "authors": ref.authors,
+            "year": ref.year,
+            "url": ref.url,
+        })
+    
+    json_path.write_text(json.dumps(data, indent=2))
+    
+    # Generate Markdown summary
+    summary = parser.get_summary(refs)
+    md_path.write_text(summary)
+    
+    console.print(f"\n[bold]Output files:[/bold]")
+    console.print(f"  📄 {md_path}")
+    console.print(f"  📋 {json_path}")
+
+
+@main.command()
 @click.argument("identifier", type=str)
 @click.option("-o", "--output", type=click.Path(), default="./output", help="Output directory")
 @click.option("--email", type=str, envvar="INGESTOR_EMAIL", help="Email for API access (CrossRef, Unpaywall)")
 @click.option("--s2-key", type=str, envvar="S2_API_KEY", help="Semantic Scholar API key")
 @click.option("--bibtex/--no-bibtex", default=True, help="Generate BibTeX citation file")
-@click.option("--markdown/--no-markdown", default=True, help="Extract PDF to markdown with metadata header")
-@click.option("--references", is_flag=True, help="Fetch and save citation references")
+@click.option("--markdown/--no-markdown", default=False, help="Extract PDF to markdown with metadata header")
+@click.option("--references/--no-references", default=True, help="Fetch and save citation references")
 @click.option("--max-refs", type=int, default=50, help="Maximum references to fetch")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_context
 def paper(ctx: click.Context, identifier: str, **kwargs):
     """Download a paper PDF with metadata.
 
-    Downloads PDF, extracts to markdown with metadata header, and generates BibTeX.
+    Downloads PDF and generates BibTeX and references file.
 
     IDENTIFIER can be:
     - DOI: 10.1038/nature12373
@@ -382,15 +548,17 @@ def paper(ctx: click.Context, identifier: str, **kwargs):
     - Direct PDF URL: https://example.com/paper.pdf
     - Paper title: "Attention Is All You Need"
 
-    Output:
+    Output (default):
     - PDF file: Author_Year_Title.pdf
-    - Markdown: Author_Year_Title.md (with metadata header)
     - BibTeX: citation.bib
-    - References: references.txt (with --references)
+    - References: references.txt
+
+    Optional:
+    - Markdown: Author_Year_Title.md (with --markdown)
 
     Examples:
         ingestor paper 10.1038/nature12373
-        ingestor paper arXiv:1706.03762 --references
+        ingestor paper arXiv:1706.03762 --markdown
         ingestor paper "Attention Is All You Need" -o ./papers
     """
     output_dir = Path(kwargs.get("output", "./output"))
@@ -480,9 +648,9 @@ def paper(ctx: click.Context, identifier: str, **kwargs):
                     
                     pdf_path.write_bytes(content)
 
-                # Step 5: Extract to markdown with metadata header
+                # Step 5: Extract to markdown with metadata header (only with --markdown flag)
                 markdown_path = None
-                if kwargs.get("markdown", True):
+                if kwargs.get("markdown", False):
                     progress.update(task, description="Extracting to markdown...")
                     try:
                         from .extractors.pdf import PdfExtractor
@@ -535,7 +703,7 @@ def paper(ctx: click.Context, identifier: str, **kwargs):
                     # Append or create
                     if bibtex_path.exists():
                         existing = bibtex_path.read_text()
-                        if metadata.citation_key not in existing:
+                        if metadata.bibtex_key not in existing:
                             bibtex_path.write_text(existing + "\n" + bibtex)
                     else:
                         bibtex_path.write_text(bibtex)
