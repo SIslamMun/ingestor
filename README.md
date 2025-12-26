@@ -25,6 +25,7 @@ Uses Google Magika file detection.
 | YouTube | Videos ✅  Playlists ✅ | Transcripts |
 | Git/GitHub | URLs ✅ | Clone, API, SSH, submodules |
 | Archives | .zip ✅ | Recursive extraction |
+| Papers | DOI ✅  arXiv ✅ | Metadata + BibTeX + PDF |
 
 ✅ = tested with real files
 🟡 = same extractor, untested extension
@@ -52,6 +53,7 @@ uv sync
 **Specific formats**:
 ```bash
 uv sync --extra pdf         # PDF documents (Docling ML)
+uv sync --extra paper       # Scientific papers (DOI, arXiv + PDF)
 uv sync --extra docx        # Word documents
 uv sync --extra xlsx        # Excel files
 uv sync --extra web         # Web crawling
@@ -138,6 +140,331 @@ The extractor automatically applies:
 uv sync --extra pdf
 
 # Docling downloads ~500MB of ML models on first use
+```
+
+### Scientific Papers
+
+Download and process scientific papers from DOI, arXiv, or other identifiers with added markdown extraction and citation graph features.
+
+**Features:**
+- DOI resolution and paper download
+- arXiv ID support
+- BibTeX/metadata extraction
+- Citation graph building (`--references`)
+- Semantic Scholar API integration
+- OpenAlex API support
+
+**Input Formats:**
+- DOI: `10.1038/nature12373`
+- arXiv ID: `arXiv:1706.03762` or `2301.12345`
+- Semantic Scholar URL
+- Direct PDF URLs
+- Paper title search
+
+**Output:**
+- Extracted markdown with metadata header
+- BibTeX file (`citation.bib`)
+- Citation list (`references.txt` with `--references`)
+
+```bash
+# Install paper support (includes PDF extraction)
+uv sync --extra paper
+
+# Basic paper acquisition by DOI
+ingestor paper 10.1038/nature12373
+
+# arXiv papers
+ingestor paper arXiv:1706.03762
+ingestor paper 2301.12345
+ingestor paper https://arxiv.org/abs/1706.03762
+
+# Search by title
+ingestor paper "Attention Is All You Need"
+
+# With citation references (builds citation graph)
+ingestor paper arXiv:1706.03762 --references --max-refs 50
+
+# Skip markdown extraction (PDF + BibTeX only, like paper-acq)
+ingestor paper 10.1038/nature12373 --no-markdown
+
+# Get just metadata (no PDF download)
+ingestor paper-meta 10.1038/nature12373 --format bibtex
+```
+
+#### Output Example
+
+```bash
+ingestor paper arXiv:1706.03762 --references -o output/paper_test
+```
+
+```
+output/paper_test/
+├── Vaswani_2017_Attention_Is_All_You_Need.pdf  # Downloaded PDF
+├── Vaswani_2017_Attention_Is_All_You_Need.md   # Markdown with metadata header
+├── citation.bib                                 # BibTeX citation
+└── references.txt                               # Citation list (41 citations)
+```
+
+**Markdown with metadata header:**
+```yaml
+---
+title: "Attention Is All You Need"
+authors: ['Ashish Vaswani', 'Noam Shazeer', ...]
+year: 2017
+doi: "10.48550/arXiv.1706.03762"
+arxiv: "1706.03762"
+abstract: "The dominant sequence transduction models..."
+source_pdf: "Vaswani_2017_Attention_Is_All_You_Need.pdf"
+---
+
+## Attention Is All You Need
+...
+```
+
+#### Batch Paper Processing
+
+Process multiple papers from a file (CSV, JSON, or TXT):
+
+```bash
+# From CSV with 'doi' and/or 'title' columns
+ingestor paper-batch papers.csv -o ./output
+
+# From JSON array
+ingestor paper-batch references.json --concurrency 5
+
+# From TXT (one identifier per line)
+ingestor paper-batch dois.txt -o ./papers
+```
+
+**CSV format:**
+```csv
+doi,title
+10.1038/nature12373,"The paper title (optional)"
+10.1126/science.1234567,
+,Attention Is All You Need
+```
+
+**JSON format:**
+```json
+[
+  {"doi": "10.1038/nature12373"},
+  {"title": "Attention Is All You Need"},
+  {"doi": "10.1126/science.1234567", "title": "Optional title"}
+]
+```
+
+**TXT format:**
+```
+# Comments supported
+10.1038/nature12373
+arXiv:1706.03762
+Attention Is All You Need
+```
+
+#### Citation Verification
+
+Verify BibTeX citations against academic databases (CrossRef, arXiv):
+
+```bash
+# Verify a single .bib file
+ingestor verify-bib references.bib -o ./verified
+
+# Verify a directory of .bib files
+ingestor verify-bib ./citations -o ./output
+
+# With manual pre-verified entries
+ingestor verify-bib refs.bib --manual custom.bib
+
+# Skip specific citation keys
+ingestor verify-bib refs.bib --skip website1 --skip github2
+
+# Dry run (see what would happen)
+ingestor verify-bib refs.bib --dry-run -v
+```
+
+**Output structure:**
+```
+verified/
+├── verified.bib     # Successfully verified citations
+├── failed.bib       # Citations needing manual attention
+└── report.md        # Summary report
+```
+
+**Verification logic:**
+- DOI citations: Verified against CrossRef/doi.org
+- arXiv papers: Verified against arXiv API (title matching)
+- Websites: Annotated with access dates (no DOI expected)
+- Missing DOIs: Searched via CrossRef title search
+- Citation keys: Preserved from original entries
+
+#### Check Paper Sources
+
+See available sources and their status:
+
+```bash
+ingestor paper-sources
+```
+
+Output:
+```
+Paper Acquisition Sources
+============================================================
+
+| Source           | Status | Description          | Auth |
+|------------------|--------|----------------------|------|
+| arXiv            | ✓      | Open access preprints| No auth required |
+| Unpaywall        | ✓      | Open access papers   | Email: ✓ |
+| PMC              | ✓      | PubMed Central       | NCBI key: ○ Optional |
+| bioRxiv          | ✓      | Biology preprints    | No auth required |
+| medRxiv          | ✓      | Medical preprints    | No auth required |
+| CrossRef         | ✓      | DOI metadata         | Polite pool: ✓ |
+| Semantic Scholar | ✓      | Metadata & citations | API key: ○ Optional |
+| OpenAlex         | ✓      | Metadata             | Email: ✓ |
+| Institutional    | ○      | EZProxy/VPN access   | Run: ingestor paper-auth |
+| WebSearch        | ○      | Claude SDK search    | pip install claude-code-sdk |
+
+Not Implemented (Legal Concerns):
+  ⛔ Sci-Hub - PDF retrieval (intentionally excluded)
+  ⛔ LibGen  - PDF retrieval (intentionally excluded)
+```
+
+#### Institutional Access (EZProxy/VPN)
+
+Access papers through your university's subscriptions (IEEE, ACM, Elsevier, etc.):
+
+```bash
+# EZProxy mode - opens browser for Shibboleth/SAML login
+ingestor paper-auth --proxy-url "https://ezproxy.university.edu/login?url="
+
+# VPN mode - runs your VPN connection script
+ingestor paper-auth --vpn-script ~/vpn-connect.sh
+```
+
+**Environment variables:**
+```bash
+export INSTITUTIONAL_PROXY_URL="https://ezproxy.university.edu/login?url="
+export INSTITUTIONAL_VPN_SCRIPT="/path/to/vpn-connect.sh"
+```
+
+**Requirements for EZProxy:**
+```bash
+pip install selenium webdriver-manager
+```
+
+#### Config Sync (Push/Pull)
+
+Sync your paper acquisition config across machines using GitHub Gists:
+
+```bash
+# Create config file
+ingestor paper-init
+
+# Push config to a private gist
+ingestor paper-config-push
+
+# Pull config on another machine
+ingestor paper-config-pull --gist-id abc123def456
+```
+
+**Requirements:**
+```bash
+# Install GitHub CLI
+# macOS: brew install gh
+# Linux: see https://cli.github.com/
+gh auth login
+```
+
+#### Supported Identifiers
+
+| Type | Examples |
+|------|----------|
+| DOI | `10.1038/nature12373`, `https://doi.org/10.1038/nature12373` |
+| arXiv | `arXiv:1706.03762`, `2301.12345`, `https://arxiv.org/abs/1706.03762` |
+| Semantic Scholar | `https://www.semanticscholar.org/paper/...` |
+| OpenAlex | `W2741809807`, `https://openalex.org/W2741809807` |
+| PubMed | `PMID:12345678`, `https://pubmed.ncbi.nlm.nih.gov/12345678` |
+| PMC | `PMC1234567` |
+| PDF URL | `https://example.com/paper.pdf` |
+| Title | `"Attention Is All You Need"` |
+
+#### Features
+
+- **DOI Resolution**: Automatic resolution via CrossRef, Semantic Scholar, OpenAlex
+- **arXiv Support**: Full arXiv ID resolution and PDF download
+- **PDF Download**: Open access PDFs via Unpaywall, arXiv, PMC, bioRxiv
+- **Markdown Extraction**: PDF to markdown with YAML metadata header
+- **BibTeX Generation**: Automatic citation generation with proper formatting
+- **Citation Graph**: Fetch cited papers via Semantic Scholar API (`--references`)
+- **Metadata Enrichment**: Authors, year, venue, abstract, citation count
+- **Citation Verification**: Verify BibTeX entries against CrossRef/arXiv (doi2bib-style)
+- **Batch Processing**: Process multiple papers from CSV/JSON/TXT files
+
+#### API Clients
+
+| API | Purpose |
+|-----|---------|
+| Semantic Scholar | Metadata, citations, references |
+| CrossRef | DOI resolution, metadata |
+| OpenAlex | Metadata, open access links |
+| arXiv | arXiv papers, metadata |
+| Unpaywall | Open access PDF links |
+| PubMed/PMC | Biomedical papers |
+| bioRxiv/medRxiv | Biology and medical preprints |
+
+#### Environment Variables
+
+```bash
+# Email for API access (CrossRef polite pool, Unpaywall, OpenAlex)
+export INGESTOR_EMAIL="your@email.com"
+
+# Semantic Scholar API key (optional, for higher rate limits)
+export S2_API_KEY="your_api_key"
+
+# NCBI API key for PubMed Central (optional)
+export NCBI_API_KEY="your_ncbi_key"
+
+# Institutional access (optional)
+export INSTITUTIONAL_PROXY_URL="https://ezproxy.university.edu/login?url="
+export INSTITUTIONAL_VPN_SCRIPT="/path/to/vpn-connect.sh"
+```
+
+#### Output Structure
+
+```
+output/
+├── Author_Year_Title.pdf     # Downloaded PDF
+├── Author_Year_Title.md      # Markdown with YAML metadata header
+├── citation.bib              # BibTeX citation
+└── references.txt            # Citation list (with --references)
+```
+
+#### Markdown Output Format
+
+```markdown
+---
+title: "Paper Title"
+authors: ['Author One', 'Author Two']
+year: 2023
+doi: "10.1038/nature12373"
+arxiv: "2301.12345"
+venue: "Nature"
+abstract: "Paper abstract text..."
+source_pdf: "Author_2023_Paper_Title.pdf"
+---
+
+## Paper Title
+
+Author One, Author Two
+
+## Abstract
+
+Paper abstract text...
+
+---
+
+## Content
+
+Full paper content extracted from PDF...
 ```
 
 ### Web Crawling

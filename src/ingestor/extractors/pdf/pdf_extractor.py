@@ -8,15 +8,19 @@ Supports:
 - Table extraction
 - LaTeX equation handling (via Docling)
 - OCR fallback for scanned PDFs (via PyMuPDF)
+- PDF URLs (automatically downloaded)
 """
 
 from __future__ import annotations
 
 import asyncio
 import io
+import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
+from urllib.parse import urlparse
 
 from ...types import ExtractionResult, ExtractedImage, MediaType
 from ..base import BaseExtractor
@@ -104,56 +108,132 @@ class PdfExtractor(BaseExtractor):
         """Check if this extractor handles the source.
 
         Args:
-            source: Path to check
+            source: Path or URL to check
 
         Returns:
-            True if this is a PDF file
+            True if this is a PDF file or PDF URL
         """
-        return str(source).lower().endswith(".pdf")
+        source_str = str(source).lower()
+        # Check for PDF URLs
+        if source_str.startswith(("http://", "https://")):
+            # Remove query string and fragment for extension check
+            url_path = source_str.split("?")[0].split("#")[0]
+            return url_path.endswith(".pdf")
+        return source_str.endswith(".pdf")
+
+    def _is_url(self, source: Union[str, Path]) -> bool:
+        """Check if source is a URL."""
+        return str(source).startswith(("http://", "https://"))
+
+    async def _download_pdf(self, url: str) -> Path:
+        """Download PDF from URL to a temporary file.
+
+        Args:
+            url: URL to download
+
+        Returns:
+            Path to temporary PDF file
+        """
+        import httpx
+
+        # Extract filename from URL
+        parsed = urlparse(url)
+        path_part = parsed.path.split("?")[0].split("#")[0]
+        filename = Path(path_part).name or "downloaded.pdf"
+        if not filename.endswith(".pdf"):
+            filename = filename + ".pdf"
+
+        # Download to temp file
+        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+
+            # Create temp file
+            temp_dir = Path(tempfile.mkdtemp())
+            temp_path = temp_dir / filename
+
+            temp_path.write_bytes(response.content)
+            return temp_path
 
     async def extract(self, source: Union[str, Path]) -> ExtractionResult:
-        """Extract content from a PDF file.
+        """Extract content from a PDF file or URL.
 
         Uses Docling for ML-based extraction with optional post-processing
         for academic papers. Falls back to PyMuPDF OCR for scanned documents.
 
         Args:
-            source: Path to the PDF file
+            source: Path to the PDF file or URL to a PDF
 
         Returns:
             ExtractionResult containing markdown, images, and metadata
         """
-        path = Path(source)
+        # Handle PDF URLs
+        temp_path: Optional[Path] = None
+        original_source = str(source)
+
+        if self._is_url(source):
+            try:
+                temp_path = await self._download_pdf(str(source))
+                path = temp_path
+            except Exception as e:
+                return self._error_result(
+                    Path(urlparse(str(source)).path.split("/")[-1] or "pdf"),
+                    f"Failed to download PDF from {source}: {e}"
+                )
+        else:
+            path = Path(source)
 
         if not path.exists():
             return self._error_result(path, f"File not found: {path}")
 
-        # Try Docling extraction first
         try:
-            return await self._extract_with_docling(path)
-        except DoclingNotInstalledError:
-            # Fall back to PyMuPDF if Docling not available
-            if self.config.use_ocr_fallback:
-                try:
-                    return await self._extract_with_pymupdf(path)
-                except PyMuPDFNotInstalledError:
+            # Try Docling extraction first
+            try:
+                result = await self._extract_with_docling(path)
+            except DoclingNotInstalledError:
+                # Fall back to PyMuPDF if Docling not available
+                if self.config.use_ocr_fallback:
+                    try:
+                        result = await self._extract_with_pymupdf(path)
+                    except PyMuPDFNotInstalledError:
+                        return self._error_result(
+                            path,
+                            "PDF extraction requires either Docling or PyMuPDF.\n"
+                            "Install with: uv sync --extra pdf"
+                        )
+                else:
                     return self._error_result(
                         path,
-                        "PDF extraction requires either Docling or PyMuPDF.\n"
-                        "Install with: uv sync --extra pdf"
+                        "Docling is not installed. Install with: uv sync --extra pdf"
                     )
-            return self._error_result(
-                path,
-                "Docling is not installed. Install with: uv sync --extra pdf"
-            )
-        except Exception as e:
-            # Try OCR fallback on extraction errors
-            if self.config.use_ocr_fallback:
+            except Exception as e:
+                # Try OCR fallback on extraction errors
+                if self.config.use_ocr_fallback:
+                    try:
+                        result = await self._extract_with_pymupdf(path)
+                    except Exception:
+                        pass
+                    else:
+                        # Add source URL to metadata if downloaded
+                        if temp_path and self._is_url(original_source):
+                            result.metadata["source_url"] = original_source
+                        return result
+                return self._error_result(path, f"Extraction failed: {e}")
+
+            # Add source URL to metadata if downloaded
+            if temp_path and self._is_url(original_source):
+                result.metadata["source_url"] = original_source
+
+            return result
+
+        finally:
+            # Clean up temp file
+            if temp_path and temp_path.exists():
                 try:
-                    return await self._extract_with_pymupdf(path)
+                    temp_path.unlink()
+                    temp_path.parent.rmdir()
                 except Exception:
                     pass
-            return self._error_result(path, f"Extraction failed: {e}")
 
     async def _extract_with_docling(self, path: Path) -> ExtractionResult:
         """Extract PDF content using Docling ML pipeline.

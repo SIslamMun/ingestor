@@ -28,6 +28,9 @@ from .archive import ZipExtractor
 # Image extractor
 from .image import ImageExtractor
 
+# Paper extractor (scientific papers from DOI, arXiv, etc.)
+from .paper import PaperExtractor, PaperConfig
+
 __all__ = [
     "BaseExtractor",
     # Documents
@@ -52,4 +55,7 @@ __all__ = [
     "ZipExtractor",
     # Image
     "ImageExtractor",
+    # Paper
+    "PaperExtractor",
+    "PaperConfig",
 ]

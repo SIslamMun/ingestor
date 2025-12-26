@@ -143,6 +143,10 @@ class FileDetector:
         if self._is_git_url(source_str):
             return MediaType.GIT
 
+        # Check for PDF URLs before generic web URLs
+        if self._is_pdf_url(source_str):
+            return MediaType.PDF
+
         if self._is_web_url(source_str):
             return MediaType.WEB
 
@@ -310,6 +314,17 @@ class FileDetector:
     def _is_git_url(self, url: str) -> bool:
         """Check if URL is a git repository URL (SSH, git://, etc.)."""
         return any(re.match(pattern, url) for pattern in self.GIT_PATTERNS)
+
+    def _is_pdf_url(self, url: str) -> bool:
+        """Check if URL points to a PDF file."""
+        if not self._is_web_url(url):
+            return False
+        # Check for .pdf extension (case insensitive)
+        # Handle URLs with query strings: https://example.com/paper.pdf?download=true
+        url_lower = url.lower()
+        # Remove query string and fragment for extension check
+        url_path = url_lower.split("?")[0].split("#")[0]
+        return url_path.endswith(".pdf")
 
     def _is_web_url(self, url: str) -> bool:
         """Check if string is a web URL."""
