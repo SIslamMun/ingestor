@@ -1,9 +1,10 @@
 """Unit tests for WebSearchClient."""
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import patch
 
-from ingestor.extractors.paper.clients.web_search import WebSearchClient
+import pytest
+
+from parser.acquisition.clients.web_search import WebSearchClient
 
 
 class TestWebSearchClientInit:
@@ -38,7 +39,7 @@ class TestSDKAvailability:
         """Test that SDK check caches result."""
         client = WebSearchClient()
         client._sdk_available = True
-        
+
         # Should return cached value without re-checking
         result = client._check_sdk_available()
         assert result is True
@@ -84,7 +85,7 @@ class TestSearchForPDF:
         """Test search with title only."""
         client = WebSearchClient(enabled=True)
         client._sdk_available = False  # SDK not available
-        
+
         result = await client.search_for_pdf(
             title="Attention Is All You Need",
         )
@@ -95,7 +96,7 @@ class TestSearchForPDF:
         """Test search with all parameters."""
         client = WebSearchClient(enabled=True)
         client._sdk_available = False  # SDK not available
-        
+
         result = await client.search_for_pdf(
             title="Attention Is All You Need",
             doi="10.48550/arXiv.1706.03762",
@@ -169,13 +170,13 @@ class TestURLExtraction:
     def test_pdf_url_pattern(self):
         """Test that PDF URL pattern works."""
         import re
-        
+
         pattern = r"https?://[^\s<>\"']+\.pdf(?:\?[^\s<>\"']*)?"
-        
+
         # Should match
         assert re.search(pattern, "https://example.com/paper.pdf", re.I)
         assert re.search(pattern, "http://example.com/download/paper.pdf?token=abc", re.I)
-        
+
         # Should not match
         assert not re.search(pattern, "https://example.com/paper.html", re.I)
 
@@ -187,7 +188,7 @@ class TestURLExtraction:
             "https://example.com/pdf/view",
             "https://example.com/full-text/article",
         ]
-        
+
         for url in urls:
             has_keyword = any(
                 x in url.lower()

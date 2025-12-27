@@ -1,7 +1,7 @@
 """Tests for CharsetHandler."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.core.charset import CharsetHandler
 
@@ -16,7 +16,7 @@ class TestCharsetHandler:
 
     def test_decode_utf8_bytes(self, handler):
         """Test decoding UTF-8 bytes."""
-        data = "Hello, World!".encode("utf-8")
+        data = b"Hello, World!"
         text, encoding = handler.decode_bytes(data)
 
         assert text == "Hello, World!"
@@ -46,7 +46,7 @@ class TestCharsetHandler:
 
     def test_detect_encoding(self, handler):
         """Test encoding detection without decoding."""
-        data = "Hello, World!".encode("utf-8")
+        data = b"Hello, World!"
         encoding = handler.detect_encoding(data)
 
         assert encoding is not None

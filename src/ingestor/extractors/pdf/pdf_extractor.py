@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import asyncio
 import io
-import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 if TYPE_CHECKING:
@@ -94,17 +93,17 @@ class PdfExtractor(BaseExtractor):
 
     media_type = MediaType.PDF
 
-    def __init__(self, config: Optional[PdfConfig] = None) -> None:
+    def __init__(self, config: PdfConfig | None = None) -> None:
         """Initialize PDF extractor.
 
         Args:
             config: Extraction configuration options
         """
         self.config = config or PdfConfig()
-        self._docling_available: Optional[bool] = None
-        self._pymupdf_available: Optional[bool] = None
+        self._docling_available: bool | None = None
+        self._pymupdf_available: bool | None = None
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:
@@ -121,7 +120,7 @@ class PdfExtractor(BaseExtractor):
             return url_path.endswith(".pdf")
         return source_str.endswith(".pdf")
 
-    def _is_url(self, source: Union[str, Path]) -> bool:
+    def _is_url(self, source: str | Path) -> bool:
         """Check if source is a URL."""
         return str(source).startswith(("http://", "https://"))
 
@@ -155,7 +154,7 @@ class PdfExtractor(BaseExtractor):
             temp_path.write_bytes(response.content)
             return temp_path
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a PDF file or URL.
 
         Uses Docling for ML-based extraction with optional post-processing
@@ -168,7 +167,7 @@ class PdfExtractor(BaseExtractor):
             ExtractionResult containing markdown, images, and metadata
         """
         # Handle PDF URLs
-        temp_path: Optional[Path] = None
+        temp_path: Path | None = None
         original_source = str(source)
 
         if self._is_url(source):
@@ -245,9 +244,7 @@ class PdfExtractor(BaseExtractor):
             ExtractionResult with markdown and images
         """
         try:
-            from docling.document_converter import DocumentConverter, PdfFormatOption
-            from docling.datamodel.pipeline_options import PdfPipelineOptions
-            from docling.datamodel.base_models import ConversionStatus, InputFormat
+            import docling  # noqa: F401
         except ImportError as e:
             raise DoclingNotInstalledError() from e
 
@@ -270,9 +267,9 @@ class PdfExtractor(BaseExtractor):
         Returns:
             ExtractionResult with markdown and images
         """
-        from docling.document_converter import DocumentConverter, PdfFormatOption
-        from docling.datamodel.pipeline_options import PdfPipelineOptions
         from docling.datamodel.base_models import ConversionStatus, InputFormat
+        from docling.datamodel.pipeline_options import PdfPipelineOptions
+        from docling.document_converter import DocumentConverter, PdfFormatOption
 
         # Configure Docling pipeline
         pipeline_options = PdfPipelineOptions()

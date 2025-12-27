@@ -1,7 +1,6 @@
 """XML extractor using defusedxml for secure parsing."""
 
 from pathlib import Path
-from typing import Union
 
 from ...types import ExtractionResult, MediaType
 from ..base import BaseExtractor
@@ -16,7 +15,7 @@ class XmlExtractor(BaseExtractor):
 
     media_type = MediaType.XML
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from an XML file.
 
         Args:
@@ -91,10 +90,7 @@ class XmlExtractor(BaseExtractor):
 
         # Build opening tag with attributes
         attrs = " ".join(f'{k}="{v}"' for k, v in element.attrib.items())
-        if attrs:
-            opening = f"<{tag} {attrs}>"
-        else:
-            opening = f"<{tag}>"
+        opening = f"<{tag} {attrs}>" if attrs else f"<{tag}>"
 
         # Check if element has children
         children = list(element)
@@ -147,7 +143,7 @@ class XmlExtractor(BaseExtractor):
             count += self._count_elements(child)
         return count
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

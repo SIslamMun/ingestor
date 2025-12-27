@@ -7,7 +7,6 @@ and provides utilities to insert references at appropriate positions.
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -103,7 +102,7 @@ def recover_orphan_images(
     orphan_images: list[str],
     image_dir: str = "./img",
     position: str = "end",
-    section_title: Optional[str] = "Images",
+    section_title: str | None = "Images",
 ) -> str:
     """Insert orphan images into markdown at specified position.
 
@@ -126,7 +125,7 @@ def recover_orphan_images(
 
     # Generate image references
     image_refs = []
-    for i, img in enumerate(orphan_images, 1):
+    for _i, img in enumerate(orphan_images, 1):
         # Try to generate a meaningful alt text from filename
         alt_text = _generate_alt_text(img)
         ref = f"![{alt_text}]({image_dir}/{img})"
@@ -187,7 +186,7 @@ def _generate_alt_text(filename: str) -> str:
 def suggest_image_placements(
     markdown: str,
     orphan_images: list[str],
-    image_contexts: Optional[dict[str, str]] = None,
+    image_contexts: dict[str, str] | None = None,
 ) -> str:
     """Generate a prompt for Claude to suggest image placements.
 
@@ -352,7 +351,7 @@ def smart_insert_images(
             img_num = img_num_match.group(1)
 
             # Look for matching figure reference
-            for ref_text, ref_start, ref_end in figure_refs:
+            for ref_text, _ref_start, ref_end in figure_refs:
                 ref_num_match = re.search(r"\d+", ref_text)
                 if ref_num_match and ref_num_match.group() == img_num:
                     # Found a match! Insert after this reference

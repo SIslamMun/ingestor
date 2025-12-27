@@ -77,7 +77,7 @@ def fix_hyphenated_words(content: str) -> str:
     """
     pattern = r"(\w+)-\n(\s*)([a-z]\w*)"
 
-    def fix_hyphen(match: re.Match) -> str:
+    def fix_hyphen(match: re.Match[str]) -> str:
         word1 = match.group(1)
         word2 = match.group(3)
         return f"{word1}{word2}"
@@ -98,7 +98,6 @@ def normalize_unicode(content: str) -> str:
         # Quotes
         """: '"',
         """: '"',
-        "'": "'",
         "'": "'",
         "„": '"',
         "‟": '"',

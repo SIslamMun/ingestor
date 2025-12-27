@@ -1,8 +1,9 @@
 """Unit tests for unified Git extractor."""
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from ingestor.extractors.git.git_extractor import GitExtractor, GitRepoConfig
 from ingestor.types import MediaType
@@ -285,7 +286,7 @@ class TestGitRepoConfig:
     def test_immutable_defaults(self):
         """Test that default sets are independent between instances."""
         config1 = GitRepoConfig()
-        config2 = GitRepoConfig()
+        GitRepoConfig()
 
         # Modify config1's extensions
         config1.include_extensions.add(".custom")
@@ -327,7 +328,7 @@ class TestGitExtractorAsync:
                         with patch.object(Path, "is_dir", return_value=True):
                             # This will fail due to complex mocking, but tests structure
                             try:
-                                result = await extractor.extract("https://github.com/owner/repo")
+                                await extractor.extract("https://github.com/owner/repo")
                             except Exception:
                                 # Expected due to incomplete mocking
                                 pass

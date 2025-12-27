@@ -3,9 +3,9 @@
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Optional
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ class ZipExtractor(BaseExtractor):
         """
         self._registry = registry
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a ZIP file.
 
         Args:
@@ -59,7 +59,7 @@ class ZipExtractor(BaseExtractor):
             )
 
         results = []
-        all_images: List[ExtractedImage] = []
+        all_images: list[ExtractedImage] = []
         file_count = 0
         processed_count = 0
 
@@ -118,7 +118,7 @@ class ZipExtractor(BaseExtractor):
     def _build_markdown(
         self,
         path: Path,
-        results: List[dict],
+        results: list[dict],
         file_count: int,
         processed_count: int,
     ) -> str:
@@ -157,7 +157,7 @@ class ZipExtractor(BaseExtractor):
 
         return "\n".join(lines)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

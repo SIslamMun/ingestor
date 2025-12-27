@@ -1,8 +1,9 @@
 """Tests for JsonExtractor."""
 
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 from ingestor.extractors.data.json_extractor import JsonExtractor
 from ingestor.types import MediaType

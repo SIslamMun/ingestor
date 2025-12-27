@@ -1,7 +1,7 @@
 """Integration tests for EPUB extraction."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.types import MediaType
 

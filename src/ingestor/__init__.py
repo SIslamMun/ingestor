@@ -2,14 +2,14 @@
 
 __version__ = "0.1.0"
 
-from .types import MediaType, ExtractedImage, ExtractionResult, IngestConfig
 from .core import (
-    FileDetector,
     CharsetHandler,
     ExtractorRegistry,
-    create_default_registry,
+    FileDetector,
     Router,
+    create_default_registry,
 )
+from .types import ExtractedImage, ExtractionResult, IngestConfig, MediaType
 
 __all__ = [
     # Version

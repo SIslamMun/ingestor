@@ -3,12 +3,12 @@
 Ported from paper-to-md project for academic paper processing.
 """
 
-from .citations import process_citations
-from .sections import process_sections
-from .figures import process_figures
 from .bibliography import process_bibliography
+from .citations import process_citations
 from .cleanup import cleanup_text
 from .equations import process_equations
+from .figures import process_figures
+from .sections import process_sections
 
 
 def process_markdown(content: str, images: list[str] | None = None) -> str:

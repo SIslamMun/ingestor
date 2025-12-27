@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import re
 
-
 # Maximum title length for a section header (longer text is likely a paragraph)
 MAX_TITLE_LENGTH = 120
 
@@ -120,10 +119,7 @@ def _is_section_title(title: str, following_lines: list[str]) -> bool:
 
     # Capitalized or uppercase text is likely a title
     words = title.split()
-    if words and (words[0][0].isupper() or title.isupper()):
-        return True
-
-    return False
+    return bool(words and (words[0][0].isupper() or title.isupper()))
 
 
 def _fix_hierarchical_sections(content: str) -> str:

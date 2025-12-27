@@ -2,11 +2,10 @@
 
 import re
 from pathlib import Path
-from typing import Dict, List, Union
 
 from markdownify import markdownify
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 
@@ -19,7 +18,7 @@ class EpubExtractor(BaseExtractor):
 
     media_type = MediaType.EPUB
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from an EPUB file.
 
         Args:
@@ -28,16 +27,16 @@ class EpubExtractor(BaseExtractor):
         Returns:
             Extraction result with markdown and images
         """
-        from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
+        from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
         path = Path(source)
         book = epub.read_epub(str(path))
 
         chapters = []
-        images: List[ExtractedImage] = []
-        
+        images: list[ExtractedImage] = []
+
         # Build image path mapping: original_path -> new_filename
-        image_map: Dict[str, str] = {}
+        image_map: dict[str, str] = {}
 
         # Extract metadata
         title = None
@@ -70,7 +69,7 @@ class EpubExtractor(BaseExtractor):
                     data=item.get_content(),
                     format=ext,
                 ))
-                
+
                 # Map all possible path variations to new filename
                 # EPUB image refs can be relative: ../images/fig.png, images/fig.png, fig.png
                 image_map[original_path] = filename
@@ -80,7 +79,7 @@ class EpubExtractor(BaseExtractor):
                     partial = "/".join(original_path.split("/")[i:])
                     image_map[partial] = filename
                     image_map["../" + partial] = filename
-                    
+
             except Exception:
                 pass
 
@@ -91,10 +90,10 @@ class EpubExtractor(BaseExtractor):
                 # Convert HTML to markdown
                 md = markdownify(content, heading_style="ATX", strip=["script", "style"])
                 md = self._clean_markdown(md)
-                
+
                 # Rewrite image paths to point to ./img/
                 md = self._rewrite_image_paths(md, image_map)
-                
+
                 if md.strip():
                     chapters.append(md)
             except Exception:
@@ -123,7 +122,7 @@ class EpubExtractor(BaseExtractor):
             },
         )
 
-    def _rewrite_image_paths(self, markdown: str, image_map: Dict[str, str]) -> str:
+    def _rewrite_image_paths(self, markdown: str, image_map: dict[str, str]) -> str:
         """Rewrite image paths in markdown to point to ./img/.
 
         Args:
@@ -135,28 +134,28 @@ class EpubExtractor(BaseExtractor):
         """
         # Pattern to match markdown images: ![alt](path)
         img_pattern = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
-        
+
         def replace_path(match):
             alt_text = match.group(1)
             original_path = match.group(2)
-            
+
             # Try to find the image in our map
             # Clean up the path (remove URL encoding, etc.)
             clean_path = original_path.replace("%20", " ")
-            
+
             # Try various path forms
             new_filename = None
             for path_variant in [clean_path, clean_path.split("/")[-1], original_path]:
                 if path_variant in image_map:
                     new_filename = image_map[path_variant]
                     break
-            
+
             if new_filename:
                 return f"![{alt_text}](./img/{new_filename})"
             else:
                 # Keep original if we can't find it
                 return match.group(0)
-        
+
         return img_pattern.sub(replace_path, markdown)
 
     def _clean_markdown(self, markdown: str) -> str:
@@ -183,7 +182,7 @@ class EpubExtractor(BaseExtractor):
 
         return "\n".join(lines).strip()
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

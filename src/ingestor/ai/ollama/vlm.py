@@ -1,9 +1,8 @@
 """Ollama VLM for generating image descriptions."""
 
 import base64
-from io import BytesIO
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any
 
 from ...types import ExtractedImage
 
@@ -30,9 +29,9 @@ class OllamaVLM:
         """
         self.model = model
         self.host = host
-        self._client = None
+        self._client: Any = None
 
-    def _get_client(self):
+    def _get_client(self) -> Any:
         """Get or create Ollama client."""
         if self._client is None:
             import ollama
@@ -41,8 +40,8 @@ class OllamaVLM:
 
     async def describe(
         self,
-        image: Union[ExtractedImage, Path, bytes],
-        prompt: Optional[str] = None,
+        image: ExtractedImage | Path | bytes,
+        prompt: str | None = None,
     ) -> str:
         """Generate a description for an image.
 
@@ -85,11 +84,27 @@ class OllamaVLM:
 
         return response.get("response", "").strip()
 
+    async def describe_file(
+        self,
+        path: Path,
+        prompt: str | None = None,
+    ) -> str:
+        """Generate a description for an image file.
+
+        Args:
+            path: Path to the image file
+            prompt: Custom prompt for description
+
+        Returns:
+            Generated description
+        """
+        return await self.describe(path, prompt)
+
     async def describe_batch(
         self,
-        images: List[ExtractedImage],
-        prompt: Optional[str] = None,
-    ) -> List[ExtractedImage]:
+        images: list[ExtractedImage],
+        prompt: str | None = None,
+    ) -> list[ExtractedImage]:
         """Generate descriptions for multiple images.
 
         Args:
@@ -137,10 +152,10 @@ class OllamaVLM:
 
 
 async def describe_images(
-    images: List[ExtractedImage],
+    images: list[ExtractedImage],
     model: str = OllamaVLM.DEFAULT_MODEL,
     host: str = "http://localhost:11434",
-) -> List[ExtractedImage]:
+) -> list[ExtractedImage]:
     """Convenience function to describe multiple images.
 
     Args:
@@ -153,3 +168,7 @@ async def describe_images(
     """
     vlm = OllamaVLM(model=model, host=host)
     return await vlm.describe_batch(images)
+
+
+# Alias for backwards compatibility
+VLMDescriber = OllamaVLM

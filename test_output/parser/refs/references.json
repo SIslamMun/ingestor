@@ -1,0 +1,250 @@
+[
+  {
+    "type": "github",
+    "value": "python/cpython",
+    "title": "cpython",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/python/cpython"
+  },
+  {
+    "type": "github",
+    "value": "django/django",
+    "title": "django",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/django/django"
+  },
+  {
+    "type": "github",
+    "value": "pallets/flask",
+    "title": "flask",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/pallets/flask"
+  },
+  {
+    "type": "github",
+    "value": "pandas-dev/pandas",
+    "title": "pandas",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/pandas-dev/pandas"
+  },
+  {
+    "type": "github",
+    "value": "scikit-learn/scikit-learn",
+    "title": "scikit-learn",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/scikit-learn/scikit-learn"
+  },
+  {
+    "type": "github",
+    "value": "tensorflow/tensorflow",
+    "title": "tensorflow",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/tensorflow/tensorflow"
+  },
+  {
+    "type": "github",
+    "value": "pytorch/pytorch",
+    "title": "pytorch",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/pytorch/pytorch"
+  },
+  {
+    "type": "github",
+    "value": "cython/cython",
+    "title": "cython",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/cython/cython"
+  },
+  {
+    "type": "github",
+    "value": "IronLanguages/ironpython3",
+    "title": "ironpython3",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/IronLanguages/ironpython3"
+  },
+  {
+    "type": "github",
+    "value": "jython/jython",
+    "title": "jython",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/jython/jython"
+  },
+  {
+    "type": "github",
+    "value": "numpy/numpy",
+    "title": "numpy",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/numpy/numpy"
+  },
+  {
+    "type": "github",
+    "value": "pypy/pypy",
+    "title": "pypy",
+    "authors": "",
+    "year": "",
+    "url": "https://github.com/pypy/pypy"
+  },
+  {
+    "type": "arxiv",
+    "value": "1605.08695",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://arxiv.org/abs/1605.08695"
+  },
+  {
+    "type": "arxiv",
+    "value": "1912.01703",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://arxiv.org/abs/1912.01703"
+  },
+  {
+    "type": "doi",
+    "value": "10.1038/s41586-020-2649-2",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://doi.org/10.1038/s41586-020-2649-2"
+  },
+  {
+    "type": "doi",
+    "value": "10.1038/s41592-019-0686-2",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://doi.org/10.1038/s41592-019-0686-2"
+  },
+  {
+    "type": "doi",
+    "value": "10.48550/arXiv.1605.08695",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://doi.org/10.48550/arXiv.1605.08695"
+  },
+  {
+    "type": "doi",
+    "value": "10.48550/arXiv.1912.01703",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://doi.org/10.48550/arXiv.1912.01703"
+  },
+  {
+    "type": "pdf",
+    "value": "http://www.jmlr.org/papers/volume12/pedregosa11a/pedregosa11a.pdf",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "http://www.jmlr.org/papers/volume12/pedregosa11a/pedregosa11a.pdf"
+  },
+  {
+    "type": "youtube",
+    "value": "J0Aq44Pze-w",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://youtube.com/watch?v=J0Aq44Pze-w"
+  },
+  {
+    "type": "youtube",
+    "value": "DsYIdMmI5-Q",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://youtube.com/watch?v=DsYIdMmI5-Q"
+  },
+  {
+    "type": "youtube",
+    "value": "GnGhI1vKi20",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": "https://youtube.com/watch?v=GnGhI1vKi20"
+  },
+  {
+    "type": "book",
+    "value": "ISBN: 9781718502703",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": null
+  },
+  {
+    "type": "book",
+    "value": "ISBN: 9781098104030",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": null
+  },
+  {
+    "type": "book",
+    "value": "ISBN: 9781492056355",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": null
+  },
+  {
+    "type": "book",
+    "value": "ISBN: 9781593279929",
+    "title": "",
+    "authors": "",
+    "year": "",
+    "url": null
+  },
+  {
+    "type": "website",
+    "value": "https://docs.python.org/",
+    "title": "docs.python.org",
+    "authors": "",
+    "year": "",
+    "url": "https://docs.python.org/"
+  },
+  {
+    "type": "website",
+    "value": "https://www.python.org/psf/",
+    "title": "www.python.org",
+    "authors": "",
+    "year": "",
+    "url": "https://www.python.org/psf/"
+  },
+  {
+    "type": "website",
+    "value": "https://peps.python.org/pep-0008/",
+    "title": "peps.python.org",
+    "authors": "",
+    "year": "",
+    "url": "https://peps.python.org/pep-0008/"
+  },
+  {
+    "type": "website",
+    "value": "https://peps.python.org/pep-0020/",
+    "title": "peps.python.org",
+    "authors": "",
+    "year": "",
+    "url": "https://peps.python.org/pep-0020/"
+  },
+  {
+    "type": "website",
+    "value": "https://pypi.org/",
+    "title": "pypi.org",
+    "authors": "",
+    "year": "",
+    "url": "https://pypi.org/"
+  }
+]

@@ -1,7 +1,7 @@
 """Integration tests for document extraction."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.extractors.text import TxtExtractor
 from ingestor.types import MediaType

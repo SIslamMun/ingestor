@@ -74,7 +74,7 @@ def _embed_figures_at_captions(content: str, figure_map: dict[int, str]) -> str:
     result = []
     embedded_figures: set[int] = set()
 
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         # Check if this line contains a figure caption
         # Pattern: "Fig." or "Figure" followed by number
         caption_match = re.search(

@@ -1,9 +1,8 @@
 """PowerPoint extractor using python-pptx."""
 
 from pathlib import Path
-from typing import List, Union
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 
@@ -15,7 +14,7 @@ class PptxExtractor(BaseExtractor):
 
     media_type = MediaType.PPTX
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a PPTX file.
 
         Args:
@@ -31,7 +30,7 @@ class PptxExtractor(BaseExtractor):
         prs = Presentation(str(path))
 
         slides_md = []
-        images: List[ExtractedImage] = []
+        images: list[ExtractedImage] = []
         img_counter = 0
 
         for slide_num, slide in enumerate(prs.slides, 1):
@@ -129,7 +128,7 @@ class PptxExtractor(BaseExtractor):
 
         return "\n".join(rows)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

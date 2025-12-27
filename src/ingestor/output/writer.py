@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import aiofiles
 
@@ -23,7 +22,7 @@ class OutputWriter:
     │   └── metadata.json (optional)
     """
 
-    def __init__(self, config: Optional[IngestConfig] = None):
+    def __init__(self, config: IngestConfig | None = None):
         """Initialize the writer.
 
         Args:
@@ -153,7 +152,7 @@ class OutputWriter:
 class OutputWriterSync:
     """Synchronous output writer for simpler use cases."""
 
-    def __init__(self, config: Optional[IngestConfig] = None):
+    def __init__(self, config: IngestConfig | None = None):
         self.config = config or IngestConfig()
         self.image_processor = ImageProcessor(config)
 

@@ -1,10 +1,9 @@
 """Tests for paper metadata extraction and BibTeX generation."""
 
-import pytest
 
-from ingestor.extractors.paper.metadata import (
-    PaperMetadata,
+from parser.doi2bib.metadata import (
     Author,
+    PaperMetadata,
 )
 
 
@@ -297,7 +296,7 @@ class TestMetadataSerialization:
         )
         data = original.to_dict()
         restored = PaperMetadata.from_dict(data)
-        
+
         assert restored.title == original.title
         assert len(restored.authors) == len(original.authors)
         assert restored.year == original.year

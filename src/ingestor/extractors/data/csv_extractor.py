@@ -1,7 +1,6 @@
 """CSV extractor using pandas."""
 
 from pathlib import Path
-from typing import Union
 
 from ...types import ExtractionResult, MediaType
 from ..base import BaseExtractor
@@ -16,7 +15,7 @@ class CsvExtractor(BaseExtractor):
 
     media_type = MediaType.CSV
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a CSV file.
 
         Args:
@@ -85,7 +84,7 @@ class CsvExtractor(BaseExtractor):
 
         return "\n".join(rows)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

@@ -1,12 +1,11 @@
 """Pytest configuration and shared fixtures."""
 
-import pytest
 from pathlib import Path
-from typing import Generator
 
-from ingestor.types import IngestConfig, MediaType
+import pytest
+
 from ingestor.core.registry import ExtractorRegistry, create_default_registry
-
+from ingestor.types import IngestConfig
 
 # ============================================================================
 # Path Fixtures

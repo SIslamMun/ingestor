@@ -1,9 +1,9 @@
 """Image format conversion."""
 
 from io import BytesIO
-from typing import List
 
 from PIL import Image
+from PIL.Image import Image as PILImage
 
 from ..types import ExtractedImage
 
@@ -53,14 +53,14 @@ class ImageConverter:
             return image
 
         # Load image
-        img = Image.open(BytesIO(image.data))
+        img: PILImage = Image.open(BytesIO(image.data))
 
         # Handle transparency for JPEG (which doesn't support it)
         if self.target_format == "jpeg" and img.mode in ("RGBA", "LA", "P"):
             # Convert to RGB with white background
             if img.mode == "P":
                 img = img.convert("RGBA")
-            background = Image.new("RGB", img.size, (255, 255, 255))
+            background: PILImage = Image.new("RGB", img.size, (255, 255, 255))
             if img.mode == "RGBA":
                 background.paste(img, mask=img.split()[3])
             else:
@@ -105,7 +105,7 @@ class ImageConverter:
             description=image.description,
         )
 
-    def convert_all(self, images: List[ExtractedImage]) -> List[ExtractedImage]:
+    def convert_all(self, images: list[ExtractedImage]) -> list[ExtractedImage]:
         """Convert multiple images to the target format.
 
         Args:

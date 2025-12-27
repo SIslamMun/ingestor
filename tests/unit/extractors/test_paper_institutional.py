@@ -1,11 +1,9 @@
 """Unit tests for InstitutionalAccessClient."""
 
 import pickle
-import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
-from ingestor.extractors.paper.clients.institutional import InstitutionalAccessClient
+from parser.acquisition.clients.institutional import InstitutionalAccessClient
 
 
 class TestInstitutionalAccessClientInit:
@@ -77,15 +75,15 @@ class TestCookiesManagement:
         client = InstitutionalAccessClient(cookies_file=str(cookies_file))
         client._cookies = {"session": "abc123"}
         client._selenium_cookies = [{"name": "session", "value": "abc123"}]
-        
+
         client.save_cookies()
-        
+
         assert cookies_file.exists()
 
     def test_load_cookies(self, tmp_path):
         """Test loading cookies."""
         cookies_file = tmp_path / "cookies.pkl"
-        
+
         # Create a valid cookies file
         data = {
             "selenium_cookies": [{"name": "session", "value": "xyz789"}],
@@ -93,23 +91,23 @@ class TestCookiesManagement:
         }
         with open(cookies_file, "wb") as f:
             pickle.dump(data, f)
-        
+
         client = InstitutionalAccessClient(cookies_file=str(cookies_file))
-        
+
         assert client._authenticated is True
         assert client._cookies == {"session": "xyz789"}
 
     def test_load_cookies_old_format(self, tmp_path):
         """Test loading cookies in old format (just dict)."""
         cookies_file = tmp_path / "cookies.pkl"
-        
+
         # Old format - just a dict
         data = {"session": "old123"}
         with open(cookies_file, "wb") as f:
             pickle.dump(data, f)
-        
+
         client = InstitutionalAccessClient(cookies_file=str(cookies_file))
-        
+
         assert client._authenticated is True
         assert client._cookies == {"session": "old123"}
 
@@ -117,9 +115,9 @@ class TestCookiesManagement:
         """Test loading when cookies file doesn't exist."""
         cookies_file = tmp_path / "nonexistent.pkl"
         client = InstitutionalAccessClient(cookies_file=str(cookies_file))
-        
+
         result = client.load_cookies()
-        
+
         assert result is False
         assert client._authenticated is False
 
@@ -147,15 +145,15 @@ class TestVPNConnection:
         """Test successful VPN connection."""
         script_path = tmp_path / "vpn.sh"
         script_path.write_text("#!/bin/bash\necho 'connected'")
-        
+
         mock_run.return_value = MagicMock(returncode=0)
-        
+
         client = InstitutionalAccessClient(
             vpn_enabled=True,
             vpn_script=str(script_path),
         )
         result = client.connect_vpn()
-        
+
         assert result is True
         assert client._vpn_connected is True
         assert client._authenticated is True
@@ -165,15 +163,15 @@ class TestVPNConnection:
         """Test failed VPN connection."""
         script_path = tmp_path / "vpn.sh"
         script_path.write_text("#!/bin/bash\nexit 1")
-        
+
         mock_run.return_value = MagicMock(returncode=1)
-        
+
         client = InstitutionalAccessClient(
             vpn_enabled=True,
             vpn_script=str(script_path),
         )
         result = client.connect_vpn()
-        
+
         assert result is False
 
 
@@ -196,7 +194,7 @@ class TestAvailability:
         data = {"selenium_cookies": [], "simple_cookies": {"session": "test"}}
         with open(cookies_file, "wb") as f:
             pickle.dump(data, f)
-        
+
         client = InstitutionalAccessClient(cookies_file=str(cookies_file))
         assert client.is_authenticated() is True
 
@@ -224,7 +222,7 @@ class TestSeleniumCheck:
     def test_check_selenium_not_available(self):
         """Test selenium check when not installed."""
         with patch.dict("sys.modules", {"selenium": None}):
-            client = InstitutionalAccessClient()
+            InstitutionalAccessClient()
             # Note: The actual check happens at import time in real usage
             # This test verifies the method structure
 

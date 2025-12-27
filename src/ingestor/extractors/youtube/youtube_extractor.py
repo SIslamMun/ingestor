@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from ...types import ExtractionResult, MediaType
@@ -23,7 +23,7 @@ class YouTubeExtractor(BaseExtractor):
         self,
         caption_type: str = "auto",
         include_playlist: bool = False,
-        languages: Optional[List[str]] = None,
+        languages: list[str] | None = None,
     ):
         """Initialize YouTube extractor.
 
@@ -36,7 +36,7 @@ class YouTubeExtractor(BaseExtractor):
         self.include_playlist = include_playlist
         self.languages = languages or ["en"]
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a YouTube video.
 
         Args:
@@ -77,7 +77,7 @@ class YouTubeExtractor(BaseExtractor):
             metadata=metadata,
         )
 
-    async def extract_playlist(self, source: Union[str, Path]) -> List[ExtractionResult]:
+    async def extract_playlist(self, source: str | Path) -> list[ExtractionResult]:
         """Extract content from all videos in a playlist.
 
         Args:
@@ -89,9 +89,9 @@ class YouTubeExtractor(BaseExtractor):
         import yt_dlp
 
         url = str(source)
-        results = []
+        results: list[ExtractionResult] = []
 
-        ydl_opts = {
+        ydl_opts: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
@@ -173,49 +173,54 @@ class YouTubeExtractor(BaseExtractor):
         )
 
         try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            # New API: instantiate and use instance methods
+            ytt = YouTubeTranscriptApi()
+            transcript_list = ytt.list(video_id)
 
             # Try to get transcript based on preference
-            transcript = None
+            selected_transcript = None
 
             if self.caption_type == "manual":
                 # Prefer manually created
-                try:
-                    transcript = transcript_list.find_manually_created_transcript(self.languages)
-                except NoTranscriptFound:
-                    pass
-
-            if transcript is None:
-                # Try auto-generated
-                try:
-                    transcript = transcript_list.find_generated_transcript(self.languages)
-                except NoTranscriptFound:
-                    pass
-
-            if transcript is None:
-                # Fall back to any available
-                try:
-                    transcript = transcript_list.find_transcript(self.languages)
-                except NoTranscriptFound:
-                    # Try any language
-                    for t in transcript_list:
-                        transcript = t
+                for t in transcript_list:
+                    if not t.is_generated and t.language_code in self.languages:
+                        selected_transcript = t
                         break
 
-            if transcript:
-                # Fetch the transcript
-                entries = transcript.fetch()
-                # Combine all text
-                return " ".join(entry.get("text", "") for entry in entries)
+            if selected_transcript is None:
+                # Try auto-generated in preferred languages
+                for t in transcript_list:
+                    if t.is_generated and t.language_code in self.languages:
+                        selected_transcript = t
+                        break
+
+            if selected_transcript is None:
+                # Fall back to any available in preferred languages
+                for t in transcript_list:
+                    if t.language_code in self.languages:
+                        selected_transcript = t
+                        break
+
+            if selected_transcript is None:
+                # Fall back to any available transcript
+                for t in transcript_list:
+                    selected_transcript = t
+                    break
+
+            if selected_transcript:
+                # Fetch the transcript using the video_id
+                fetched = ytt.fetch(video_id, languages=[selected_transcript.language_code])
+                # Combine all text from snippets
+                return " ".join(snippet.text for snippet in fetched.snippets)
 
             return ""
 
-        except (TranscriptsDisabled, VideoUnavailable):
+        except (TranscriptsDisabled, VideoUnavailable, NoTranscriptFound):
             return ""
         except Exception:
             return ""
 
-    def _build_markdown(self, metadata: dict, transcript: str) -> str:
+    def _build_markdown(self, metadata: dict[str, Any], transcript: str) -> str:
         """Build markdown from metadata and transcript.
 
         Args:
@@ -273,7 +278,7 @@ class YouTubeExtractor(BaseExtractor):
 
         return "\n".join(lines)
 
-    def _extract_video_id(self, url: str) -> Optional[str]:
+    def _extract_video_id(self, url: str) -> str | None:
         """Extract video ID from YouTube URL.
 
         Args:
@@ -310,7 +315,7 @@ class YouTubeExtractor(BaseExtractor):
 
         return None
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:
@@ -331,8 +336,4 @@ class YouTubeExtractor(BaseExtractor):
             r"youtube\.com/playlist",
         ]
 
-        for pattern in youtube_patterns:
-            if re.search(pattern, source_str):
-                return True
-
-        return False
+        return any(re.search(pattern, source_str) for pattern in youtube_patterns)

@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Union
 
 from ..types import ExtractionResult, MediaType
 
@@ -18,7 +17,7 @@ class BaseExtractor(ABC):
     media_type: MediaType
 
     @abstractmethod
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content and images from the source.
 
         Args:
@@ -30,7 +29,7 @@ class BaseExtractor(ABC):
         pass
 
     @abstractmethod
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor can handle the given source.
 
         Args:

@@ -1,7 +1,6 @@
 """Charset detection and handling using charset_normalizer."""
 
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 from charset_normalizer import from_bytes, from_path
 
@@ -15,7 +14,7 @@ class CharsetHandler:
 
     DEFAULT_ENCODING = "utf-8"
 
-    def read_text(self, path: Union[str, Path]) -> Tuple[str, str]:
+    def read_text(self, path: str | Path) -> tuple[str, str]:
         """Read text from a file with automatic charset detection.
 
         Args:
@@ -42,7 +41,7 @@ class CharsetHandler:
             text = path.read_text(encoding="latin-1")
             return text, "latin-1"
 
-    def decode_bytes(self, data: bytes) -> Tuple[str, str]:
+    def decode_bytes(self, data: bytes) -> tuple[str, str]:
         """Decode bytes with automatic charset detection.
 
         Args:
@@ -65,7 +64,7 @@ class CharsetHandler:
             # Try latin-1 as last resort
             return data.decode("latin-1"), "latin-1"
 
-    def detect_encoding(self, data: bytes) -> Optional[str]:
+    def detect_encoding(self, data: bytes) -> str | None:
         """Detect the encoding of raw bytes without decoding.
 
         Args:
@@ -82,7 +81,7 @@ class CharsetHandler:
             pass
         return None
 
-    def detect_encoding_from_file(self, path: Union[str, Path]) -> Optional[str]:
+    def detect_encoding_from_file(self, path: str | Path) -> str | None:
         """Detect the encoding of a file without reading it fully.
 
         Args:

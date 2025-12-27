@@ -1,7 +1,6 @@
 """Modern Excel (XLSX) extractor using pandas and openpyxl."""
 
 from pathlib import Path
-from typing import Union
 
 from ...types import ExtractionResult, MediaType
 from ..base import BaseExtractor
@@ -16,7 +15,7 @@ class XlsxExtractor(BaseExtractor):
 
     media_type = MediaType.XLSX
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from an XLSX file.
 
         Args:
@@ -96,7 +95,7 @@ class XlsxExtractor(BaseExtractor):
 
         return "\n".join(rows)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

@@ -1,14 +1,13 @@
 """Tests for paper identifier resolution."""
 
-import pytest
 
-from ingestor.extractors.paper.resolver import (
-    resolve_identifier,
-    PaperIdentifier,
+from parser.doi2bib.resolver import (
     IdentifierType,
-    normalize_doi,
-    normalize_arxiv_id,
+    PaperIdentifier,
     arxiv_id_to_doi,
+    normalize_arxiv_id,
+    normalize_doi,
+    resolve_identifier,
 )
 
 

@@ -1,0 +1,16 @@
+# The Story of Python, by Its Creator, Guido van Rossum
+
+**Channel:** Oracle Developers
+**Uploaded:** 2019-02-25
+**Duration:** 4m 1s
+**Views:** 310,227
+
+**URL:** https://www.youtube.com/watch?v=J0Aq44Pze-w
+
+## Description
+
+Learn more about Python's creator, Guido Van Rossum, his pioneering work with the Python programming language, and the status of the community today.
+
+## Transcript
+
+I'm Dutch I grew up in the Netherlands in fact I created Python while I was working in the Netherlands I got a nice job as a programmer at a place called CWI which is a sort of a research lab funded by the government doing advanced math and computer science research my first job was on a team that worked on a programming language named ABC and it was a super interesting project and everything I know about language design or all my opinions about language design originated in that project ABC was eventually unsuccessful and I moved on to programming on other projects at the same place the key one was amoeba which was a distributed system that was being built collaboratively by CWI and one of the universities in amsterdam at some point I realized every application we have to write in for amoeba is basically a shell either a shell script or a C program and I found that there were downsides to either of those and I thought well I wish there was a third language that was sort of in the middle of those that felt more like a genuine programming language like on the sea side but that was perhaps interpreted easier to use sort of more concise of expression like shell scripts but without the sort of terrible properties in terms of readability of shell scripts I thought hmmm I can build my own building an interpreter it's gonna take me two or three months and I'll win that time back by increased productivity not just for myself but for the whole team well those three months sort of bloomed to more and more time I don't think we only amoeba project we ever gained that productivity back in amoeba sort of mostly produced scientific papers iPhones slowly became successful paying about after about a year we released it as open source actually we didn't call it open source because those terms had not been invented and almost immediately a small community of iPhone lovers started growing where people sort of spread the word about Python and sort of started contributing back and critiquing each other's contributions and sort of let me have the last word about whether I wanted a particular contribution in the language last July I actually resigned my position of BD FL which is ironic because of the FL standing for for life one imminent change is that pythons own government structure is changing the community is currently in the middle of sort of figuring out what's the best way is to to sort of have governance going forward which is either going to be an honor be DFL although that is the less likely solution more likely I see a small committee of people who are committed to Python success long term those people will also be guiding pythons sort of future vision

@@ -1,7 +1,8 @@
 """Tests for ImageConverter."""
 
-import pytest
 from io import BytesIO
+
+import pytest
 
 from ingestor.images.converter import ImageConverter
 from ingestor.types import ExtractedImage

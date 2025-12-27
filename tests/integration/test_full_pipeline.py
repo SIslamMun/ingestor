@@ -1,7 +1,7 @@
 """Integration tests for the full extraction pipeline."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.core.registry import create_default_registry
 from ingestor.core.router import Router

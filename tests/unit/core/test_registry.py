@@ -1,11 +1,9 @@
 """Tests for ExtractorRegistry."""
 
-import pytest
-from unittest.mock import Mock
 
 from ingestor.core.registry import ExtractorRegistry, create_default_registry
-from ingestor.types import MediaType
 from ingestor.extractors.base import BaseExtractor
+from ingestor.types import MediaType
 
 
 class MockExtractor(BaseExtractor):

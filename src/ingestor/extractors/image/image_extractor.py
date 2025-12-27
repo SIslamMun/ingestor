@@ -1,9 +1,9 @@
 """Image extractor with EXIF metadata extraction."""
 
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 
@@ -24,7 +24,7 @@ class ImageExtractor(BaseExtractor):
         ".webp", ".ico", ".svg", ".heic", ".heif",
     }
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract metadata from an image file.
 
         Args:
@@ -34,7 +34,7 @@ class ImageExtractor(BaseExtractor):
             Extraction result with metadata and image
         """
         path = Path(source)
-        
+
         # Check if it's an SVG file (by content, not just extension)
         try:
             content = path.read_bytes()
@@ -42,14 +42,13 @@ class ImageExtractor(BaseExtractor):
                 return self._extract_svg(path, content)
         except Exception:
             pass
-        
+
         # Handle raster images with PIL
         return await self._extract_raster_image(path)
-    
+
     async def _extract_raster_image(self, path: Path) -> ExtractionResult:
         """Extract metadata from a raster image file (PNG, JPG, etc.)."""
         from PIL import Image
-        from PIL.ExifTags import TAGS
 
         # Read image
         with Image.open(path) as img:
@@ -95,35 +94,35 @@ class ImageExtractor(BaseExtractor):
                 **exif_data,
             },
         )
-    
+
     def _extract_svg(self, path: Path, content: bytes) -> ExtractionResult:
         """Extract metadata from an SVG file."""
         import re
-        
+
         # Try to decode the content
         try:
             svg_text = content.decode('utf-8')
         except UnicodeDecodeError:
             svg_text = content.decode('latin-1')
-        
+
         # Try to extract dimensions from SVG
         width = height = "unknown"
-        
+
         # Look for width/height attributes
         width_match = re.search(r'width=["\']?(\d+(?:\.\d+)?)', svg_text)
         height_match = re.search(r'height=["\']?(\d+(?:\.\d+)?)', svg_text)
-        
+
         if width_match:
             width = width_match.group(1)
         if height_match:
             height = height_match.group(1)
-        
+
         # Look for viewBox
         viewbox_match = re.search(r'viewBox=["\']?[\d.\s]+\s+([\d.]+)\s+([\d.]+)', svg_text)
         if viewbox_match and width == "unknown":
             width = viewbox_match.group(1)
             height = viewbox_match.group(2)
-        
+
         # Build markdown
         markdown = f"""# Image: {path.name}
 
@@ -137,7 +136,7 @@ class ImageExtractor(BaseExtractor):
 
 > **Note:** SVG is a vector image format stored as XML text.
 """
-        
+
         # Create extracted image
         images = [
             ExtractedImage(
@@ -146,7 +145,7 @@ class ImageExtractor(BaseExtractor):
                 format="svg",
             )
         ]
-        
+
         return ExtractionResult(
             markdown=markdown,
             title=path.stem,
@@ -170,9 +169,9 @@ class ImageExtractor(BaseExtractor):
         Returns:
             Dictionary of EXIF data
         """
-        from PIL.ExifTags import TAGS, GPSTAGS
+        from PIL.ExifTags import GPSTAGS, TAGS
 
-        exif_data = {}
+        exif_data: dict[str, Any] = {}
 
         try:
             exif = img._getexif()
@@ -252,8 +251,8 @@ class ImageExtractor(BaseExtractor):
             "",
             "## Properties",
             "",
-            f"| Property | Value |",
-            f"| --- | --- |",
+            "| Property | Value |",
+            "| --- | --- |",
             f"| Dimensions | {width} × {height} |",
             f"| Format | {format_name} |",
             f"| Color Mode | {mode} |",
@@ -301,7 +300,7 @@ class ImageExtractor(BaseExtractor):
 
         return "\n".join(lines)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

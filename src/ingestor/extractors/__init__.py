@@ -1,35 +1,31 @@
 """Extractors for various media formats."""
 
+# Archive extractor
+from .archive import ZipExtractor
+
+# Audio extractor
+from .audio import AudioExtractor
 from .base import BaseExtractor
-
-# Document extractors
-from .text import TxtExtractor
-from .pdf import PdfExtractor
-from .docx import DocxExtractor
-from .pptx import PptxExtractor
-from .epub import EpubExtractor
-
-# Spreadsheet extractors
-from .excel import XlsxExtractor, XlsExtractor
 
 # Data extractors
 from .data import CsvExtractor, JsonExtractor, XmlExtractor
+from .docx import DocxExtractor
+from .epub import EpubExtractor
+
+# Spreadsheet extractors
+from .excel import XlsExtractor, XlsxExtractor
+
+# Image extractor
+from .image import ImageExtractor
+from .pdf import PdfExtractor
+from .pptx import PptxExtractor
+
+# Document extractors
+from .text import TxtExtractor
 
 # Web extractors
 from .web import WebExtractor
 from .youtube import YouTubeExtractor
-
-# Audio extractor
-from .audio import AudioExtractor
-
-# Archive extractor
-from .archive import ZipExtractor
-
-# Image extractor
-from .image import ImageExtractor
-
-# Paper extractor (scientific papers from DOI, arXiv, etc.)
-from .paper import PaperExtractor, PaperConfig
 
 __all__ = [
     "BaseExtractor",
@@ -55,7 +51,4 @@ __all__ = [
     "ZipExtractor",
     # Image
     "ImageExtractor",
-    # Paper
-    "PaperExtractor",
-    "PaperConfig",
 ]

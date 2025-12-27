@@ -1,10 +1,10 @@
 """Web content extractor using Crawl4AI."""
 
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any
 from urllib.parse import urlparse
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 
@@ -25,8 +25,8 @@ class WebExtractor(BaseExtractor):
         strategy: str = "bfs",
         max_depth: int = 2,
         max_pages: int = 50,
-        include_patterns: Optional[List[str]] = None,
-        exclude_patterns: Optional[List[str]] = None,
+        include_patterns: list[str] | None = None,
+        exclude_patterns: list[str] | None = None,
         same_domain: bool = True,
     ):
         """Initialize web extractor.
@@ -46,7 +46,7 @@ class WebExtractor(BaseExtractor):
         self.exclude_patterns = exclude_patterns or []
         self.same_domain = same_domain
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a URL.
 
         Args:
@@ -95,7 +95,7 @@ class WebExtractor(BaseExtractor):
 
             # Extract images and get URL mapping
             images, image_url_map = self._extract_images(result)
-            
+
             # Rewrite image paths in markdown to point to extracted images
             if image_url_map:
                 markdown = self._rewrite_image_paths(markdown, image_url_map)
@@ -112,7 +112,7 @@ class WebExtractor(BaseExtractor):
                 },
             )
 
-    async def crawl_deep(self, source: Union[str, Path]) -> List[ExtractionResult]:
+    async def crawl_deep(self, source: str | Path) -> list[ExtractionResult]:
         """Perform deep crawling of a website.
 
         Args:
@@ -161,13 +161,13 @@ class WebExtractor(BaseExtractor):
             # Handle both list and single result
             if not isinstance(crawl_results, list):
                 crawl_results = [crawl_results]
-            
+
             for result in crawl_results:
                 if result.success:
                     markdown = result.markdown or ""
                     title = result.metadata.get("title", "") if result.metadata else ""
                     images, image_url_map = self._extract_images(result)
-                    
+
                     # Rewrite image paths
                     if image_url_map:
                         markdown = self._rewrite_image_paths(markdown, image_url_map)
@@ -202,17 +202,17 @@ class WebExtractor(BaseExtractor):
         # Plain URL
         return content.strip()
 
-    def _extract_images(self, result) -> List[ExtractedImage]:
+    def _extract_images(self, result: Any) -> tuple[list[ExtractedImage], dict[str, str]]:
         """Extract images from crawl result.
 
         Args:
             result: Crawl4AI result
 
         Returns:
-            List of extracted images
+            Tuple of (list of extracted images, URL to filename mapping)
         """
-        images = []
-        image_url_map = {}  # Map original URLs to new filenames
+        images: list[ExtractedImage] = []
+        image_url_map: dict[str, str] = {}  # Map original URLs to new filenames
 
         if hasattr(result, "media") and result.media:
             img_data = result.media.get("images", [])
@@ -227,14 +227,14 @@ class WebExtractor(BaseExtractor):
                             ext = "jpeg"
 
                         filename = f"web_image_{i+1}.{ext}"
-                        
+
                         images.append(ExtractedImage(
                             filename=filename,
                             data=data,
                             format=ext,
                             context=img.get("alt", ""),
                         ))
-                        
+
                         # Map original URL to new filename
                         if img.get("src"):
                             image_url_map[img["src"]] = filename
@@ -243,7 +243,7 @@ class WebExtractor(BaseExtractor):
 
         return images, image_url_map
 
-    def _rewrite_image_paths(self, markdown: str, image_url_map: dict) -> str:
+    def _rewrite_image_paths(self, markdown: str, image_url_map: dict[str, str]) -> str:
         """Rewrite image URLs in markdown to point to extracted images.
 
         Args:
@@ -254,30 +254,30 @@ class WebExtractor(BaseExtractor):
             Markdown with rewritten image paths
         """
         import re
-        
+
         # Pattern to match markdown images: ![alt](url)
         img_pattern = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
-        
+
         def replace_url(match):
             alt_text = match.group(1)
             original_url = match.group(2)
-            
+
             # Check if we have this image extracted
             if original_url in image_url_map:
                 return f"![{alt_text}](./img/{image_url_map[original_url]})"
-            
+
             # Try matching just the filename part
             url_filename = original_url.split("/")[-1].split("?")[0]
             for url, filename in image_url_map.items():
                 if url.endswith(url_filename):
                     return f"![{alt_text}](./img/{filename})"
-            
+
             # Keep original if we don't have it extracted
             return match.group(0)
-        
+
         return img_pattern.sub(replace_url, markdown)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:
@@ -297,8 +297,6 @@ class WebExtractor(BaseExtractor):
             # Exclude YouTube URLs
             parsed = urlparse(source_str)
             youtube_domains = ["youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com"]
-            if parsed.netloc in youtube_domains:
-                return False
-            return True
+            return parsed.netloc not in youtube_domains
 
         return False

@@ -1,7 +1,7 @@
 """Unified image processing pipeline."""
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Any
 
 from ..types import ExtractedImage, IngestConfig
 from .converter import ImageConverter
@@ -16,7 +16,7 @@ class ImageProcessor:
     - Optional VLM description generation
     """
 
-    def __init__(self, config: Optional[IngestConfig] = None):
+    def __init__(self, config: IngestConfig | None = None):
         """Initialize the processor.
 
         Args:
@@ -26,15 +26,15 @@ class ImageProcessor:
 
         # Initialize converter unless keeping raw formats
         if not self.config.keep_raw_images:
-            self.converter = ImageConverter(self.config.target_image_format)
+            self.converter: ImageConverter | None = ImageConverter(self.config.target_image_format)
         else:
             self.converter = None
 
         # VLM describer (lazy loaded)
-        self._vlm_describer = None
+        self._vlm_describer: Any = None
 
     @property
-    def vlm_describer(self):
+    def vlm_describer(self) -> Any:
         """Lazy load VLM describer."""
         if self._vlm_describer is None and self.config.describe_images:
             try:
@@ -49,9 +49,9 @@ class ImageProcessor:
 
     async def process(
         self,
-        images: List[ExtractedImage],
+        images: list[ExtractedImage],
         source_name: str = "document",
-    ) -> List[ExtractedImage]:
+    ) -> list[ExtractedImage]:
         """Process a list of images through the pipeline.
 
         Args:
@@ -135,9 +135,9 @@ class ImageProcessor:
 
     def process_sync(
         self,
-        images: List[ExtractedImage],
+        images: list[ExtractedImage],
         source_name: str = "document",
-    ) -> List[ExtractedImage]:
+    ) -> list[ExtractedImage]:
         """Process images synchronously (no VLM).
 
         Args:

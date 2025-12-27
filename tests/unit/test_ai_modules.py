@@ -1,7 +1,7 @@
 """Real unit tests for AI modules (Claude and Ollama) - no mocking."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.ai.claude.agent import ClaudeAgent
 from ingestor.ai.ollama.vlm import OllamaVLM
@@ -14,7 +14,7 @@ class TestClaudeAgentInit:
     def test_default_init(self):
         """Test default initialization."""
         agent = ClaudeAgent()
-        
+
         assert agent.system_prompt == ClaudeAgent.DEFAULT_SYSTEM_PROMPT
         assert agent._sdk is None
 
@@ -22,13 +22,13 @@ class TestClaudeAgentInit:
         """Test initialization with custom system prompt."""
         custom_prompt = "You are a custom agent."
         agent = ClaudeAgent(system_prompt=custom_prompt)
-        
+
         assert agent.system_prompt == custom_prompt
 
     def test_default_system_prompt_content(self):
         """Test default system prompt contains key instructions."""
         agent = ClaudeAgent()
-        
+
         assert "markdown" in agent.system_prompt.lower()
         assert "clean" in agent.system_prompt.lower()
         assert "format" in agent.system_prompt.lower()
@@ -57,7 +57,7 @@ class TestOllamaVLMInit:
     def test_default_init(self):
         """Test default initialization."""
         vlm = OllamaVLM()
-        
+
         assert vlm.model == OllamaVLM.DEFAULT_MODEL
         assert vlm.host == "http://localhost:11434"
         assert vlm._client is None
@@ -68,7 +68,7 @@ class TestOllamaVLMInit:
             model="moondream",
             host="http://custom-host:12345",
         )
-        
+
         assert vlm.model == "moondream"
         assert vlm.host == "http://custom-host:12345"
 
@@ -90,7 +90,7 @@ class TestOllamaVLMDescribe:
         # Create a small test image (1x1 PNG)
         png_header = b'\x89PNG\r\n\x1a\n'
         img_bytes = png_header + b'\x00' * 100
-        
+
         # This will fail without Ollama running, but tests the interface
         try:
             result = await vlm.describe(img_bytes)
@@ -106,7 +106,7 @@ class TestOllamaVLMDescribe:
         img_path = tmp_path / "test.png"
         png_header = b'\x89PNG\r\n\x1a\n'
         img_path.write_bytes(png_header + b'\x00' * 100)
-        
+
         try:
             result = await vlm.describe(img_path)
             assert isinstance(result, str)
@@ -123,7 +123,7 @@ class TestOllamaVLMDescribe:
             format="png",
             filename="test.png",
         )
-        
+
         try:
             result = await vlm.describe(image)
             assert isinstance(result, str)
@@ -136,9 +136,9 @@ class TestOllamaVLMDescribe:
         """Test describe with custom prompt."""
         png_header = b'\x89PNG\r\n\x1a\n'
         img_bytes = png_header + b'\x00' * 100
-        
+
         custom_prompt = "What objects are in this image?"
-        
+
         try:
             result = await vlm.describe(img_bytes, prompt=custom_prompt)
             assert isinstance(result, str)
@@ -153,7 +153,7 @@ class TestOllamaVLMClient:
     def test_get_client_creates_client(self):
         """Test _get_client creates Ollama client."""
         vlm = OllamaVLM()
-        
+
         try:
             client = vlm._get_client()
             assert client is not None
@@ -164,7 +164,7 @@ class TestOllamaVLMClient:
     def test_get_client_reuses_client(self):
         """Test _get_client reuses existing client."""
         vlm = OllamaVLM()
-        
+
         try:
             client1 = vlm._get_client()
             client2 = vlm._get_client()
@@ -231,23 +231,26 @@ class TestOllamaVLMRealExtraction:
         # Create a simple test image (using PIL if available)
         try:
             from PIL import Image
-            
+
             # Create a simple red square image
             img = Image.new('RGB', (100, 100), color='red')
             img_path = tmp_path / "red_square.png"
             img.save(img_path)
-            
+
             result = await vlm.describe(img_path)
-            
+
             assert result is not None
             assert isinstance(result, str)
             assert len(result) > 0
-            
+
         except ImportError:
             pytest.skip("PIL not installed for image creation")
         except Exception as e:
-            if "connection" in str(e).lower() or "refused" in str(e).lower():
+            error_msg = str(e).lower()
+            if "connection" in error_msg or "refused" in error_msg:
                 pytest.skip("Ollama not running")
+            if "not found" in error_msg or "404" in error_msg:
+                pytest.skip("Ollama model 'llava' not installed")
             raise
 
 
@@ -264,7 +267,7 @@ class TestClaudeAgentRealCleanup:
         """Test cleaning up real content with Claude."""
         messy_content = """
 # Title
-        
+
 This is some    text with   extra   spaces.
 
 
@@ -274,14 +277,14 @@ And multiple blank lines.
 -Item 2 (missing space)
 - Item 3
         """
-        
+
         try:
             result = await agent.cleanup(messy_content)
-            
+
             assert result is not None
             assert isinstance(result, str)
             assert len(result) > 0
-            
+
         except ImportError:
             pytest.skip("Claude SDK not installed")
         except Exception as e:

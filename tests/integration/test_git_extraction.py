@@ -2,10 +2,9 @@
 
 import pytest
 
+from ingestor.core.detector import FileDetector
 from ingestor.extractors.git.git_extractor import GitExtractor, GitRepoConfig
 from ingestor.types import MediaType
-from ingestor.core.detector import FileDetector
-
 
 # Mark all tests in this module as requiring network access
 pytestmark = pytest.mark.network

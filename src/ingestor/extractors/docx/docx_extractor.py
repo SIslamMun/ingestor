@@ -2,11 +2,10 @@
 
 import hashlib
 from pathlib import Path
-from typing import List, Union
 
 from markdownify import markdownify
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 
@@ -20,7 +19,7 @@ class DocxExtractor(BaseExtractor):
 
     media_type = MediaType.DOCX
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a DOCX file.
 
         Args:
@@ -32,16 +31,16 @@ class DocxExtractor(BaseExtractor):
         import mammoth
 
         path = Path(source)
-        images: List[ExtractedImage] = []
+        images: list[ExtractedImage] = []
         img_counter = [0]  # Use list for closure mutability
 
         def convert_image(image):
             """Custom image converter that extracts and references images inline."""
             img_counter[0] += 1
-            
+
             with image.open() as img_file:
                 img_data = img_file.read()
-            
+
             # Determine extension from content type
             content_type = image.content_type or "image/png"
             ext = content_type.split("/")[-1].lower()
@@ -49,18 +48,18 @@ class DocxExtractor(BaseExtractor):
                 ext = "jpeg"
             elif ext not in ("png", "jpeg", "gif", "webp", "svg"):
                 ext = "png"
-            
+
             # Generate unique filename using hash
             img_hash = hashlib.md5(img_data).hexdigest()[:8]
             filename = f"image_{img_counter[0]}_{img_hash}.{ext}"
-            
+
             # Store image for extraction
             images.append(ExtractedImage(
                 filename=filename,
                 data=img_data,
                 format=ext,
             ))
-            
+
             # Return image element with path to extracted image
             return {"src": f"./img/{filename}"}
 
@@ -133,7 +132,7 @@ class DocxExtractor(BaseExtractor):
 
         return "\n".join(lines).strip()
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

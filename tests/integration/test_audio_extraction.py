@@ -1,22 +1,27 @@
 """Integration tests for audio extraction with Whisper."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.types import MediaType
 
+# Check if whisper is available
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    WHISPER_AVAILABLE = False
 
+
+@pytest.mark.skipif(not WHISPER_AVAILABLE, reason="openai-whisper not installed")
 class TestAudioExtraction:
     """Integration tests for audio transcription."""
 
     @pytest.fixture
     def extractor(self):
-        try:
-            from ingestor.extractors.audio import AudioExtractor
-            # Use tiny model for faster tests
-            return AudioExtractor(model="tiny")
-        except ImportError:
-            pytest.skip("openai-whisper not installed")
+        from ingestor.extractors.audio import AudioExtractor
+        # Use tiny model for faster tests
+        return AudioExtractor(model="tiny")
 
     def test_supports_audio_formats(self, extractor):
         """Test supports various audio formats."""

@@ -1,11 +1,16 @@
 """Integration tests for data format extraction."""
 
-import json
 import pytest
-from pathlib import Path
 
-from ingestor.extractors.data import JsonExtractor, XmlExtractor, CsvExtractor
+from ingestor.extractors.data import JsonExtractor
 from ingestor.types import MediaType
+
+# Check if defusedxml is available
+try:
+    import defusedxml
+    DEFUSEDXML_AVAILABLE = True
+except ImportError:
+    DEFUSEDXML_AVAILABLE = False
 
 
 class TestJsonExtraction:
@@ -46,11 +51,10 @@ class TestXmlExtraction:
 
     @pytest.fixture
     def extractor(self):
-        try:
-            from ingestor.extractors.data import XmlExtractor
-            return XmlExtractor()
-        except ImportError:
+        if not DEFUSEDXML_AVAILABLE:
             pytest.skip("defusedxml not installed")
+        from ingestor.extractors.data import XmlExtractor
+        return XmlExtractor()
 
     @pytest.mark.asyncio
     async def test_extract_xml(self, extractor, sample_xml):

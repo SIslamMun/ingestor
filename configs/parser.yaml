@@ -1,0 +1,65 @@
+# Parser module configuration
+# Environment variables can override these settings:
+#   PAPER_EMAIL, S2_API_KEY, NCBI_API_KEY, SCIHUB_ENABLED, etc.
+
+# Email for polite API access (required for Unpaywall, CrossRef)
+email: ""
+
+# API keys for various services
+api_keys:
+  semantic_scholar: ""  # or use S2_API_KEY env var
+  ncbi: ""              # for PubMed/PMC
+
+# Source priorities (lower = higher priority)
+# Enabled sources will be tried in this order
+source_priorities:
+  unpaywall: 1        # Best - legal open access
+  arxiv: 2            # Preprints  
+  pmc: 3              # PubMed Central
+  biorxiv: 4          # Biology preprints
+  semantic_scholar: 5 # Academic search
+  crossref: 6         # DOI metadata (rarely has PDFs)
+  openalex: 7         # OpenAlex OA links
+  web_search: 8       # Google Scholar fallback
+  scihub: 9           # Unofficial - requires disclaimer
+  libgen: 10          # Unofficial - requires disclaimer
+
+# Rate limits (seconds between requests)
+rate_limits:
+  crossref: 0.5       # CrossRef is generous
+  arxiv: 3.0          # arXiv requests slow
+  unpaywall: 1.0
+  semantic_scholar: 3.0
+  pmc: 0.34           # NCBI allows 3/sec with key
+  biorxiv: 1.0
+  openalex: 0.1       # OpenAlex is very fast
+  scihub: 5.0         # Be nice to mirrors
+  libgen: 5.0
+  web_search: 2.0
+  global_delay: 1.0   # Delay between papers in batch
+
+# Download settings
+download:
+  output_dir: "./papers"
+  skip_existing: true
+  max_retries: 3
+  timeout: 60
+
+# Batch processing settings
+batch:
+  progress_file: ".retrieval_progress.json"
+  max_failures: 10  # Stop after this many consecutive failures
+
+# Institutional access (optional)
+institutional:
+  enabled: false
+  proxy_url: ""           # EZProxy URL like https://ezproxy.university.edu/login?url=
+  vpn_enabled: false
+  vpn_script: ""
+  cookies_file: ".institutional_cookies.pkl"
+
+# Unofficial sources (Sci-Hub, LibGen)
+# These are legally gray - only use if you accept the risks
+unofficial:
+  enabled: false
+  disclaimer_accepted: false  # Set to true to enable unofficial sources

@@ -1,8 +1,8 @@
 """Real unit tests for Image Extractor - no mocking."""
 
-import pytest
-from pathlib import Path
 from io import BytesIO
+
+import pytest
 
 from ingestor.extractors.image.image_extractor import ImageExtractor
 from ingestor.types import MediaType
@@ -73,35 +73,35 @@ class TestImageExtractor:
         """Test supports() for PNG file."""
         png_file = tmp_path / "test.png"
         png_file.write_bytes(create_test_png())
-        
+
         assert extractor.supports(str(png_file)) is True
 
     def test_supports_jpg(self, extractor, tmp_path):
         """Test supports() for JPG file."""
         jpg_file = tmp_path / "test.jpg"
         jpg_file.write_bytes(create_test_jpeg())
-        
+
         assert extractor.supports(str(jpg_file)) is True
 
     def test_supports_jpeg(self, extractor, tmp_path):
         """Test supports() for JPEG file."""
         jpeg_file = tmp_path / "test.jpeg"
         jpeg_file.write_bytes(create_test_jpeg())
-        
+
         assert extractor.supports(str(jpeg_file)) is True
 
     def test_supports_gif(self, extractor, tmp_path):
         """Test supports() for GIF file."""
         gif_file = tmp_path / "test.gif"
         gif_file.write_bytes(create_test_gif())
-        
+
         assert extractor.supports(str(gif_file)) is True
 
     def test_supports_non_image(self, extractor, tmp_path):
         """Test supports() returns False for non-image files."""
         txt_file = tmp_path / "test.txt"
         txt_file.write_text("Not an image")
-        
+
         assert extractor.supports(str(txt_file)) is False
 
     @pytest.mark.asyncio
@@ -109,12 +109,12 @@ class TestImageExtractor:
         """Test extracting PNG image."""
         try:
             from PIL import Image
-            
+
             png_file = tmp_path / "test.png"
             png_file.write_bytes(create_test_png(100, 80))
-            
+
             result = await extractor.extract(str(png_file))
-            
+
             assert result is not None
             assert result.media_type == MediaType.IMAGE
             assert result.title == "test"
@@ -129,12 +129,12 @@ class TestImageExtractor:
         """Test extracting JPEG image."""
         try:
             from PIL import Image
-            
+
             jpg_file = tmp_path / "photo.jpg"
             jpg_file.write_bytes(create_test_jpeg(200, 150))
-            
+
             result = await extractor.extract(str(jpg_file))
-            
+
             assert result is not None
             assert result.media_type == MediaType.IMAGE
             assert len(result.images) == 1
@@ -147,12 +147,12 @@ class TestImageExtractor:
         """Test extracting GIF image."""
         try:
             from PIL import Image
-            
+
             gif_file = tmp_path / "animation.gif"
             gif_file.write_bytes(create_test_gif(50, 50))
-            
+
             result = await extractor.extract(str(gif_file))
-            
+
             assert result is not None
             assert len(result.images) == 1
         except ImportError:
@@ -164,9 +164,9 @@ class TestImageExtractor:
         svg_content = b'<?xml version="1.0"?><svg width="100" height="100"></svg>'
         svg_file = tmp_path / "icon.svg"
         svg_file.write_bytes(svg_content)
-        
+
         result = await extractor.extract(str(svg_file))
-        
+
         assert result is not None
         assert result.media_type == MediaType.IMAGE
 
@@ -176,9 +176,9 @@ class TestImageExtractor:
         svg_content = b'<svg width="100" height="100"></svg>'
         svg_file = tmp_path / "icon.svg"
         svg_file.write_bytes(svg_content)
-        
+
         result = await extractor.extract(str(svg_file))
-        
+
         assert result is not None
 
     @pytest.mark.asyncio
@@ -186,12 +186,12 @@ class TestImageExtractor:
         """Test extraction produces markdown output."""
         try:
             from PIL import Image
-            
+
             png_file = tmp_path / "test_image.png"
             png_file.write_bytes(create_test_png())
-            
+
             result = await extractor.extract(str(png_file))
-            
+
             assert result.markdown is not None
             assert len(result.markdown) > 0
         except ImportError:
@@ -202,12 +202,12 @@ class TestImageExtractor:
         """Test extraction includes metadata."""
         try:
             from PIL import Image
-            
+
             png_file = tmp_path / "test.png"
             png_file.write_bytes(create_test_png(200, 100))
-            
+
             result = await extractor.extract(str(png_file))
-            
+
             assert "width" in result.metadata
             assert "height" in result.metadata
             assert "format" in result.metadata
@@ -229,35 +229,35 @@ class TestImageExtractorExtensions:
         # Create a test file (may not be valid WebP)
         webp_file = tmp_path / "test.webp"
         webp_file.write_bytes(b"RIFF" + b"\x00" * 100)
-        
+
         assert extractor.supports(str(webp_file)) is True
 
     def test_bmp_extension(self, extractor, tmp_path):
         """Test BMP extension is supported."""
         bmp_file = tmp_path / "test.bmp"
         bmp_file.write_bytes(b"BM" + b"\x00" * 100)
-        
+
         assert extractor.supports(str(bmp_file)) is True
 
     def test_tiff_extension(self, extractor, tmp_path):
         """Test TIFF extension is supported."""
         tiff_file = tmp_path / "test.tiff"
         tiff_file.write_bytes(b"II" + b"\x00" * 100)
-        
+
         assert extractor.supports(str(tiff_file)) is True
 
     def test_ico_extension(self, extractor, tmp_path):
         """Test ICO extension is supported."""
         ico_file = tmp_path / "favicon.ico"
         ico_file.write_bytes(b"\x00" * 100)
-        
+
         assert extractor.supports(str(ico_file)) is True
 
     def test_heic_extension(self, extractor, tmp_path):
         """Test HEIC extension is supported."""
         heic_file = tmp_path / "photo.heic"
         heic_file.write_bytes(b"\x00" * 100)
-        
+
         assert extractor.supports(str(heic_file)) is True
 
 
@@ -272,7 +272,7 @@ class TestImageExtractorEdgeCases:
         """Test supports() handles uppercase extensions."""
         png_file = tmp_path / "TEST.PNG"
         png_file.write_bytes(create_test_png())
-        
+
         # May or may not be supported depending on implementation
         result = extractor.supports(str(png_file))
         assert result in [True, False]
@@ -281,7 +281,7 @@ class TestImageExtractorEdgeCases:
         """Test supports() accepts Path objects."""
         png_file = tmp_path / "test.png"
         png_file.write_bytes(create_test_png())
-        
+
         assert extractor.supports(png_file) is True
 
     @pytest.mark.asyncio
@@ -289,12 +289,12 @@ class TestImageExtractorEdgeCases:
         """Test extract() accepts Path objects."""
         try:
             from PIL import Image
-            
+
             png_file = tmp_path / "test.png"
             png_file.write_bytes(create_test_png())
-            
+
             result = await extractor.extract(png_file)
-            
+
             assert result is not None
         except ImportError:
             pytest.skip("PIL not installed")
@@ -312,7 +312,7 @@ class TestImageExtractorSupports:
         # Create file with image extension but non-image content
         fake_png = tmp_path / "fake.png"
         fake_png.write_text("This is not a PNG file")
-        
+
         # Should support by extension (content check may happen during extract)
         result = extractor.supports(str(fake_png))
         # Implementation may or may not verify content in supports()

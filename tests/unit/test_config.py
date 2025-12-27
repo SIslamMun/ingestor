@@ -1,17 +1,15 @@
 """Real unit tests for Config module - no mocking."""
 
-import pytest
 from pathlib import Path
-import yaml
 
 from ingestor.config import (
-    IngestorConfig,
+    AIConfig,
+    AudioConfig,
     ImageConfig,
+    IngestorConfig,
+    OutputConfig,
     WebConfig,
     YouTubeConfig,
-    AudioConfig,
-    AIConfig,
-    OutputConfig,
     load_config,
 )
 
@@ -22,7 +20,7 @@ class TestImageConfig:
     def test_default_values(self):
         """Test ImageConfig default values."""
         config = ImageConfig()
-        
+
         assert config.convert_to_png is True
         assert config.target_format == "png"
         assert config.naming_style == "sequential"
@@ -34,7 +32,7 @@ class TestImageConfig:
             target_format="webp",
             naming_style="page_based"
         )
-        
+
         assert config.convert_to_png is False
         assert config.target_format == "webp"
         assert config.naming_style == "page_based"
@@ -46,7 +44,7 @@ class TestWebConfig:
     def test_default_values(self):
         """Test WebConfig default values."""
         config = WebConfig()
-        
+
         assert config.strategy == "bfs"
         assert config.max_depth == 2
         assert config.max_pages == 50
@@ -64,7 +62,7 @@ class TestWebConfig:
             include_patterns=["/docs/*"],
             exclude_patterns=["/login"]
         )
-        
+
         assert config.strategy == "dfs"
         assert config.max_depth == 5
         assert config.max_pages == 100
@@ -79,7 +77,7 @@ class TestYouTubeConfig:
     def test_default_values(self):
         """Test YouTubeConfig default values."""
         config = YouTubeConfig()
-        
+
         assert config.caption_type == "auto"
         assert config.include_playlist is False
         assert config.languages == ["en"]
@@ -91,7 +89,7 @@ class TestYouTubeConfig:
             include_playlist=True,
             languages=["en", "es", "fr"]
         )
-        
+
         assert config.caption_type == "manual"
         assert config.include_playlist is True
         assert "es" in config.languages
@@ -103,13 +101,13 @@ class TestAudioConfig:
     def test_default_values(self):
         """Test AudioConfig default values."""
         config = AudioConfig()
-        
+
         assert config.whisper_model == "turbo"
 
     def test_custom_values(self):
         """Test AudioConfig with custom values."""
         config = AudioConfig(whisper_model="large")
-        
+
         assert config.whisper_model == "large"
 
 
@@ -119,7 +117,7 @@ class TestAIConfig:
     def test_default_values(self):
         """Test AIConfig default values."""
         config = AIConfig()
-        
+
         assert config.describe_images is False
         assert config.vlm_model == "llava"
         assert config.ollama_host == "http://localhost:11434"
@@ -133,7 +131,7 @@ class TestAIConfig:
             ollama_host="http://192.168.1.100:11434",
             cleanup_markdown=True
         )
-        
+
         assert config.describe_images is True
         assert config.vlm_model == "llava:13b"
         assert config.ollama_host == "http://192.168.1.100:11434"
@@ -146,7 +144,7 @@ class TestOutputConfig:
     def test_default_values(self):
         """Test OutputConfig default values."""
         config = OutputConfig()
-        
+
         assert config.directory == Path("./output")
         assert config.generate_metadata is False
         assert config.create_img_folder is True
@@ -158,7 +156,7 @@ class TestOutputConfig:
             generate_metadata=True,
             create_img_folder=False
         )
-        
+
         assert config.directory == tmp_path
         assert config.generate_metadata is True
         assert config.create_img_folder is False
@@ -170,7 +168,7 @@ class TestIngestorConfig:
     def test_default_values(self):
         """Test IngestorConfig default values."""
         config = IngestorConfig()
-        
+
         assert isinstance(config.images, ImageConfig)
         assert isinstance(config.web, WebConfig)
         assert isinstance(config.youtube, YouTubeConfig)
@@ -186,7 +184,7 @@ class TestIngestorConfig:
             web=WebConfig(max_depth=3),
             verbose=True
         )
-        
+
         assert config.images.target_format == "webp"
         assert config.web.max_depth == 3
         assert config.verbose is True
@@ -204,9 +202,9 @@ verbose: true
 """
         yaml_file = tmp_path / "config.yaml"
         yaml_file.write_text(yaml_content)
-        
+
         config = IngestorConfig.from_yaml(yaml_file)
-        
+
         assert config.images.convert_to_png is False
         assert config.images.target_format == "webp"
         assert config.web.max_depth == 5
@@ -217,9 +215,9 @@ verbose: true
         """Test loading from empty YAML file."""
         yaml_file = tmp_path / "empty.yaml"
         yaml_file.write_text("")
-        
+
         config = IngestorConfig.from_yaml(yaml_file)
-        
+
         # Should use defaults
         assert config.images.convert_to_png is True
         assert config.verbose is False
@@ -230,12 +228,12 @@ verbose: true
             images=ImageConfig(target_format="webp"),
             verbose=True
         )
-        
+
         yaml_file = tmp_path / "output_config.yaml"
         config.to_yaml(yaml_file)
-        
+
         assert yaml_file.exists()
-        
+
         # Read raw content to verify key values
         content = yaml_file.read_text()
         assert "webp" in content
@@ -244,7 +242,7 @@ verbose: true
     def test_from_cli_args_default(self):
         """Test creating config from CLI args with defaults."""
         config = IngestorConfig.from_cli_args()
-        
+
         assert config.images.convert_to_png is True
         assert config.ai.describe_images is False
         assert config.verbose is False
@@ -260,7 +258,7 @@ verbose: true
             metadata=True,
             verbose=True
         )
-        
+
         assert config.output.directory == tmp_path
         assert config.images.convert_to_png is False
         assert config.images.target_format == "jpeg"
@@ -275,7 +273,7 @@ verbose: true
             max_depth=5,
             max_pages=200
         )
-        
+
         assert config.web.max_depth == 5
         assert config.web.max_pages == 200
 
@@ -284,7 +282,7 @@ verbose: true
         config = IngestorConfig.from_cli_args(
             include_playlist=True
         )
-        
+
         assert config.youtube.include_playlist is True
 
     def test_from_cli_args_audio_kwargs(self):
@@ -292,7 +290,7 @@ verbose: true
         config = IngestorConfig.from_cli_args(
             whisper_model="large"
         )
-        
+
         assert config.audio.whisper_model == "large"
 
 
@@ -308,9 +306,9 @@ web:
 """
         config_file = tmp_path / "my_config.yaml"
         config_file.write_text(yaml_content)
-        
+
         config = load_config(config_file)
-        
+
         assert config.verbose is True
         assert config.web.max_depth == 10
 
@@ -318,9 +316,9 @@ web:
         """Test loading returns defaults when no config file exists."""
         # Change to temp dir with no config files
         monkeypatch.chdir(tmp_path)
-        
+
         config = load_config()
-        
+
         # Should return defaults
         assert config.images.convert_to_png is True
         assert config.verbose is False
@@ -329,23 +327,23 @@ web:
         """Test loading from default ingestor.yaml path."""
         # Create config in current directory
         monkeypatch.chdir(tmp_path)
-        
+
         yaml_content = """
 verbose: true
 """
         config_file = tmp_path / "ingestor.yaml"
         config_file.write_text(yaml_content)
-        
+
         config = load_config()
-        
+
         assert config.verbose is True
 
     def test_load_nonexistent_explicit_path(self, tmp_path):
         """Test loading from nonexistent explicit path returns defaults."""
         nonexistent = tmp_path / "does_not_exist.yaml"
-        
+
         config = load_config(nonexistent)
-        
+
         # Should return defaults since file doesn't exist
         assert config.verbose is False
 
@@ -356,9 +354,9 @@ class TestConfigModel:
     def test_model_dump(self):
         """Test model_dump method."""
         config = IngestorConfig(verbose=True)
-        
+
         data = config.model_dump()
-        
+
         assert isinstance(data, dict)
         assert data["verbose"] is True
         assert "images" in data
@@ -375,9 +373,9 @@ class TestConfigModel:
             # Note: Skip output config with Path, use defaults
             verbose=True
         )
-        
+
         yaml_file = tmp_path / "roundtrip.yaml"
-        
+
         # Manually create YAML without Path issues
         yaml_content = f"""
 images:
@@ -410,9 +408,9 @@ output:
 verbose: {str(original.verbose).lower()}
 """
         yaml_file.write_text(yaml_content)
-        
+
         loaded = IngestorConfig.from_yaml(yaml_file)
-        
+
         assert loaded.images.target_format == "webp"
         assert loaded.web.max_depth == 5
         assert loaded.youtube.include_playlist is True

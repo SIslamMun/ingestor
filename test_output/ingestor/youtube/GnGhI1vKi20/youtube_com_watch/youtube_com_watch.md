@@ -1,0 +1,22 @@
+# What is TensorFlow?
+
+**Channel:** IBM Technology
+**Uploaded:** 2024-03-22
+**Duration:** 4m 20s
+**Views:** 90,771
+
+**URL:** https://www.youtube.com/watch?v=GnGhI1vKi20
+
+## Description
+
+Learn TensorFlow and earn a badge→ https://ibm.biz/Bdv73n
+
+Tensors and TensorFlow play a key role in the development and deployment of Machine Learning systems, and with the explosion of interest in Machine Learning and Deep Learning related to Generative AI, it's important to have a grasp on the TensorFlow. In this Video Jamil Spain walks you through the basics of TensorFlow.
+
+Get started for free on IBM Cloud → https://ibm.biz/sign-up-now
+
+Subscribe to see more videos like this in the future → http://ibm.biz/subscribe-now
+
+## Transcript
+
+On my bucket list for this year is a commitment to do more tinkering with machine learning and AI. And as I've started this research, I keep running into references to what is a Tensor, what is a TensorFlow. Let's go ahead and break these down real quick. TensorFlow is an open- source project you can access via GitHub and it can be used with a variety of modern languages like Python, JavaScript, Java, and C++. Put simply, it's used to develop and improve AI and machine learning models, which is why you hear about it so much. So, the second question makes me ask, what is a tensor anyway? It turns out a tensor is an algorithm expressed as a multilinear, which is essentially a complex array used in machine learning. One way of showing this is a multi-dimensional array kind of like this shape. TensorFlow is an open-source platform for creating and using models. It's just that simple. And what I wanted to outline is kind of the way you work through it. It is a very iterative platform where you can really get started immediately taking advantage of machine learning. It comes first by doing the training. Now when it comes to building these models, creating them, there are many decisions to make and this is where TensorFlow really aids you in this process and you can decide it to say hey I wanted to train this I have a set of data uh I want to make this model be a CPU be trained by CPU or GPU or there's there's even tensor uh computing processing units that you can do as well to train your data but it gives you an opportunity to make that decision when you want to create the model. Now, if you don't have your own data, you can it will give you data sets that you can leverage. All right? If you uh kind of don't want to go the process of creating your models by hand, there are some starter let's say we call them estimators, which are like starter uh neural networks to get started or models that you can use to really try to get jumpstart your your your process of doing this. And then the last part is once you have something you have to deploy that well another great part of that is you can also give you an API. Testflow is going to give you an API you can use code name kas uh but that will be a way that you can actually input data to train your models. It encapsulates any of the models that you want to create. So very important there that process of getting started is very easy. Now the last part you may say is all right I'm using TensorFlow I want to know what I want to achieve in my application but how do I get it into where I want to develop and that's where the last part that it offers for you it gives you a method for deployment a it's going to let you get into mobile and embedded abbreviated EM so iOS Android SDKs and the ability to get on Raspberry Pies. All right, Linux, ARM SDKs for you to get there as well. Secondly, you'll be able to get on browsers. There's going to be a library which is TensorFlowJS which will give you a mechanism for creating and executing your models inside um your code as well. And also you can do uh I kind of mentioned embedded systems, but that's something you can do. But there's an additional piece here too. You can get even get in on embedded devices. They even have microcontrollers. So the opportunities are endless here to really get started here. Well, for me, when I want to get started with something, I actually love being able to take advantage of any platform I can that can help me jump start and get and get going. And that's what you should do. I want you to leave in the comments what you think about TensorFlow and tell us how easy it was to get jump start your journey. As always, see your respon

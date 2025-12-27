@@ -12,19 +12,16 @@ Handles:
 import asyncio
 import base64
 import fnmatch
-import json
 import os
 import re
-import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
-from urllib.parse import urlparse
+from typing import Any
 
-from ...types import ExtractionResult, ExtractedImage, MediaType
+from ...types import ExtractedImage, ExtractionResult, MediaType
 from ..base import BaseExtractor
 
 
@@ -35,12 +32,12 @@ class GitRepoConfig:
     # Clone options
     shallow: bool = True  # Use shallow clone (--depth 1)
     depth: int = 1  # Clone depth for shallow clone
-    branch: Optional[str] = None  # Specific branch to clone
-    tag: Optional[str] = None  # Specific tag to clone
-    commit: Optional[str] = None  # Specific commit to checkout
+    branch: str | None = None  # Specific branch to clone
+    tag: str | None = None  # Specific tag to clone
+    commit: str | None = None  # Specific commit to checkout
 
     # File filtering
-    include_extensions: Set[str] = field(default_factory=lambda: {
+    include_extensions: set[str] = field(default_factory=lambda: {
         # Source code
         ".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".c", ".cpp", ".h", ".hpp",
         ".go", ".rs", ".rb", ".php", ".swift", ".kt", ".scala", ".r", ".R",
@@ -56,7 +53,7 @@ class GitRepoConfig:
         ".makefile", ".cmake", ".gradle", ".maven",
     })
 
-    exclude_patterns: Set[str] = field(default_factory=lambda: {
+    exclude_patterns: set[str] = field(default_factory=lambda: {
         # Directories
         "node_modules/", "vendor/", "venv/", ".venv/", "__pycache__/",
         ".git/", ".svn/", ".hg/", "dist/", "build/", "target/",
@@ -75,7 +72,7 @@ class GitRepoConfig:
     include_submodules: bool = False  # Process git submodules
 
     # Important files to always include
-    important_files: Set[str] = field(default_factory=lambda: {
+    important_files: set[str] = field(default_factory=lambda: {
         "readme.md", "readme.rst", "readme.txt", "readme",
         "license", "license.md", "license.txt", "mit-license", "apache-license",
         "contributing.md", "contributing", "contribute.md",
@@ -138,9 +135,9 @@ class GitExtractor(BaseExtractor):
 
     def __init__(
         self,
-        config: Optional[GitRepoConfig] = None,
-        token: Optional[str] = None,
-        registry: Optional[Any] = None,
+        config: GitRepoConfig | None = None,
+        token: str | None = None,
+        registry: Any | None = None,
         use_api_for_github: bool = True,  # Use GitHub API when possible
     ):
         """Initialize git extractor.
@@ -160,7 +157,7 @@ class GitExtractor(BaseExtractor):
         """Set the extractor registry."""
         self._registry = registry
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor can handle the source."""
         source_str = str(source)
 
@@ -186,7 +183,7 @@ class GitExtractor(BaseExtractor):
 
         return False
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a git repository or GitHub URL."""
         source_str = str(source)
 
@@ -203,11 +200,11 @@ class GitExtractor(BaseExtractor):
         github_parsed = self._parse_github_url(source_str)
         if github_parsed and self.use_api_for_github:
             url_type = github_parsed["url_type"]
-            
+
             # For single files and directories, use GitHub API (faster)
             if url_type in ("file", "tree", "raw"):
                 return await self._extract_via_github_api(github_parsed, source_str)
-            
+
             # For full repo, clone is more comprehensive
             # But we can still get metadata via API
             if url_type == "repo":
@@ -218,7 +215,7 @@ class GitExtractor(BaseExtractor):
 
     # ==================== GitHub API Methods ====================
 
-    def _parse_github_url(self, url: str) -> Optional[Dict[str, Any]]:
+    def _parse_github_url(self, url: str) -> dict[str, Any] | None:
         """Parse a GitHub URL to extract components."""
         url = str(url).rstrip("/")
 
@@ -278,7 +275,7 @@ class GitExtractor(BaseExtractor):
             headers["Authorization"] = f"token {self.token}"
         return headers
 
-    async def _api_request(self, url: str) -> dict:
+    async def _api_request(self, url: str) -> Any:
         """Make a request to GitHub API."""
         import httpx
 
@@ -288,7 +285,7 @@ class GitExtractor(BaseExtractor):
             return response.json()
 
     async def _extract_via_github_api(
-        self, parsed: Dict[str, Any], url: str
+        self, parsed: dict[str, Any], url: str
     ) -> ExtractionResult:
         """Extract content using GitHub API (for files/directories)."""
         owner = parsed["owner"]
@@ -302,6 +299,15 @@ class GitExtractor(BaseExtractor):
                 return await self._extract_github_file(owner, repo, branch, path, url)
             elif url_type == "tree":
                 return await self._extract_github_directory(owner, repo, branch, path, url)
+            else:
+                return ExtractionResult(
+                    markdown=f"# Unsupported GitHub URL type\n\nURL type '{url_type}' is not supported.",
+                    title="Unsupported",
+                    source=url,
+                    media_type=MediaType.GIT,
+                    images=[],
+                    metadata={"error": f"Unsupported URL type: {url_type}"},
+                )
         except Exception as e:
             return ExtractionResult(
                 markdown=f"# Error\n\nFailed to extract from GitHub: {url}\n\n{str(e)}",
@@ -449,7 +455,7 @@ class GitExtractor(BaseExtractor):
         )
 
     async def _extract_github_repo_hybrid(
-        self, parsed: Dict[str, Any], url: str
+        self, parsed: dict[str, Any], url: str
     ) -> ExtractionResult:
         """Extract GitHub repo using clone + API for metadata."""
         owner = parsed["owner"]
@@ -515,10 +521,10 @@ class GitExtractor(BaseExtractor):
 
     async def _process_download_git_file(self, file_path: Path) -> ExtractionResult:
         """Process a .download_git file containing repository URLs."""
-        repos: List[str] = []
+        repos: list[str] = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#"):
@@ -544,7 +550,7 @@ class GitExtractor(BaseExtractor):
             )
 
         # Process each repository
-        results: List[ExtractionResult] = []
+        results: list[ExtractionResult] = []
         for repo_url in repos:
             try:
                 result = await self.extract(repo_url)
@@ -562,11 +568,11 @@ class GitExtractor(BaseExtractor):
         return self._combine_results(results, file_path)
 
     def _combine_results(
-        self, results: List[ExtractionResult], source_file: Path
+        self, results: list[ExtractionResult], source_file: Path
     ) -> ExtractionResult:
         """Combine multiple extraction results into one."""
         all_markdown = [
-            f"# Bulk Git Repository Extraction",
+            "# Bulk Git Repository Extraction",
             "",
             f"**Source:** `{source_file.name}`",
             f"**Repositories:** {len(results)}",
@@ -576,7 +582,7 @@ class GitExtractor(BaseExtractor):
             "",
         ]
 
-        all_images: List[ExtractedImage] = []
+        all_images: list[ExtractedImage] = []
         total_files = 0
         failed = 0
 
@@ -713,9 +719,9 @@ class GitExtractor(BaseExtractor):
             metadata=metadata,
         )
 
-    async def _get_repo_metadata(self, repo_path: Path) -> Dict[str, Any]:
+    async def _get_repo_metadata(self, repo_path: Path) -> dict[str, Any]:
         """Get repository metadata from git."""
-        metadata: Dict[str, Any] = {
+        metadata: dict[str, Any] = {
             "name": repo_path.name,
             "extracted_at": datetime.now().isoformat(),
         }
@@ -816,13 +822,13 @@ class GitExtractor(BaseExtractor):
 
     async def _process_files(
         self, repo_path: Path
-    ) -> tuple[List[Dict[str, Any]], List[ExtractedImage]]:
+    ) -> tuple[list[dict[str, Any]], list[ExtractedImage]]:
         """Process all files in the repository."""
-        files_content: List[Dict[str, Any]] = []
-        images: List[ExtractedImage] = []
+        files_content: list[dict[str, Any]] = []
+        images: list[ExtractedImage] = []
         processed_count = 0
 
-        all_files: List[Path] = []
+        all_files: list[Path] = []
         for file_path in repo_path.rglob("*"):
             if not file_path.is_file():
                 continue
@@ -956,9 +962,9 @@ class GitExtractor(BaseExtractor):
     def _build_markdown(
         self,
         repo_name: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
         structure: str,
-        files: List[Dict[str, Any]],
+        files: list[dict[str, Any]],
         source: str,
     ) -> str:
         """Build the final markdown document."""
@@ -1048,11 +1054,11 @@ class GitExtractor(BaseExtractor):
 
 
 # Helper function
-def parse_download_git_file(path: Path) -> List[str]:
+def parse_download_git_file(path: Path) -> list[str]:
     """Parse a .download_git file to get repository URLs."""
-    urls: List[str] = []
+    urls: list[str] = []
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#"):

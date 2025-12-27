@@ -1,7 +1,6 @@
 """Audio extractor using OpenAI Whisper for transcription."""
 
 from pathlib import Path
-from typing import Optional, Union
 
 from ...types import ExtractionResult, MediaType
 from ..base import BaseExtractor
@@ -38,7 +37,7 @@ class AudioExtractor(BaseExtractor):
             self._model = whisper.load_model(self.model_name)
         return self._model
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract transcription from an audio file.
 
         Args:
@@ -158,7 +157,7 @@ class AudioExtractor(BaseExtractor):
             return f"{hours:02d}:{minutes:02d}:{secs:02d}"
         return f"{minutes:02d}:{secs:02d}"
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

@@ -1,7 +1,6 @@
 """Plain text file extractor with charset detection."""
 
 from pathlib import Path
-from typing import Union
 
 from ...core.charset import CharsetHandler
 from ...types import ExtractionResult, MediaType
@@ -24,7 +23,7 @@ class TxtExtractor(BaseExtractor):
         """Initialize the extractor."""
         self.charset_handler = CharsetHandler()
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract text content from a file.
 
         Args:
@@ -40,10 +39,7 @@ class TxtExtractor(BaseExtractor):
 
         # For markdown files, return as-is
         # For other text files, wrap in code block if it looks like code
-        if path.suffix.lower() in {".md", ".rst"}:
-            markdown = text
-        else:
-            markdown = text
+        markdown = text if path.suffix.lower() in {".md", ".rst"} else text
 
         return ExtractionResult(
             markdown=markdown,
@@ -58,7 +54,7 @@ class TxtExtractor(BaseExtractor):
             },
         )
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor can handle the source.
 
         Args:

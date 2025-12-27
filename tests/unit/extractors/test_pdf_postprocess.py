@@ -1,14 +1,13 @@
 """Unit tests for PDF postprocessing modules."""
 
-import pytest
 
 from ingestor.extractors.pdf.postprocess import (
-    process_markdown,
-    process_citations,
-    process_sections,
-    process_figures,
-    process_bibliography,
     cleanup_text,
+    process_bibliography,
+    process_citations,
+    process_figures,
+    process_markdown,
+    process_sections,
 )
 from ingestor.extractors.pdf.postprocess.equations import process_equations
 
@@ -184,7 +183,7 @@ class TestCleanupText:
         content = "Line 1\n\n\n\n\nLine 2"
         result = cleanup_text(content)
         assert "\n\n\n" not in result
-        assert "Line 1\n\nLine 2" == result
+        assert result == "Line 1\n\nLine 2"
 
     def test_trailing_whitespace(self):
         """Test trailing whitespace is removed."""

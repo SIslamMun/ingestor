@@ -1,8 +1,7 @@
 """File type detection using Google's Magika (AI-powered, 99% accuracy)."""
 
-from pathlib import Path
-from typing import Optional, Union
 import re
+from pathlib import Path
 
 from magika import Magika
 
@@ -113,7 +112,7 @@ class FileDetector:
 
     def __init__(self):
         """Initialize the file detector with Magika."""
-        self._magika: Optional[Magika] = None
+        self._magika: Magika | None = None
 
     @property
     def magika(self) -> Magika:
@@ -122,7 +121,7 @@ class FileDetector:
             self._magika = Magika()
         return self._magika
 
-    def detect(self, source: Union[str, Path]) -> MediaType:
+    def detect(self, source: str | Path) -> MediaType:
         """Detect the media type of a source.
 
         Args:
@@ -185,11 +184,11 @@ class FileDetector:
             result = self.magika.identify_path(path)
             label = result.output.label.lower()
             detected = self.MAGIKA_TO_MEDIA_TYPE.get(label, MediaType.UNKNOWN)
-            
+
             # If Magika returns UNKNOWN, try extension-based detection
             if detected == MediaType.UNKNOWN:
                 return self._detect_by_extension(path)
-            
+
             return detected
         except Exception:
             # Fallback to extension if Magika fails

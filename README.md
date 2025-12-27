@@ -1,8 +1,12 @@
 # Ingestor
 
-Convert a variety of data formats to markdown for RAG or LLM training.
+> Universal document → markdown + images converter  
+> With integrated scientific paper acquisition and AI-powered deep research
 
-Extracts multi-modality data, targeting text, images (also extracted, as much as possible, from provided files) and audio. 
+**Three CLI Tools:**
+- `ingestor` - Extract markdown and images from PDFs, Word docs, PowerPoints, EPUBs, spreadsheets, web pages, YouTube videos, audio files, Git repos, and more
+- `parser` - Download and process scientific papers from DOI, arXiv, or other identifiers with BibTeX generation and citation verification
+- `researcher` - AI-powered deep research using Google Gemini
 
 Uses Google Magika file detection.
 
@@ -25,7 +29,6 @@ Uses Google Magika file detection.
 | YouTube | Videos ✅  Playlists ✅ | Transcripts |
 | Git/GitHub | URLs ✅ | Clone, API, SSH, submodules |
 | Archives | .zip ✅ | Recursive extraction |
-| Papers | DOI ✅  arXiv ✅ | Metadata + BibTeX + PDF |
 
 ✅ = tested with real files
 🟡 = same extractor, untested extension
@@ -144,82 +147,116 @@ uv sync --extra pdf
 
 ### Scientific Papers
 
-Download and process scientific papers from DOI, arXiv, or other identifiers with added markdown extraction and citation graph features.
+Retrieve scientific papers from DOI, arXiv, title search, or direct URLs with multi-source fallback.
+
+> **Note:** Scientific paper commands use the `parser` CLI tool.
 
 **Features:**
-- DOI resolution and paper download
-- arXiv ID support
+- Multi-source paper retrieval (arXiv, Semantic Scholar, OpenAlex, PMC, Unpaywall, bioRxiv)
+- DOI and arXiv ID resolution
+- Title-based paper search
+- Direct PDF URL support
 - BibTeX/metadata extraction
-- Citation graph building (`--references`)
-- Semantic Scholar API integration
-- OpenAlex API support
+- DOI to BibTeX conversion (`doi2bib`)
+- Citation verification (`verify`)
+- Skip existing / force re-download
 
 **Input Formats:**
-- DOI: `10.1038/nature12373`
+- DOI: `10.1038/nature12373` or `-d "10.1038/nature12373"`
 - arXiv ID: `arXiv:1706.03762` or `2301.12345`
+- Title search: `-t "Attention Is All You Need"`
+- Direct PDF URLs: `https://arxiv.org/pdf/1706.03762.pdf`
 - Semantic Scholar URL
-- Direct PDF URLs
-- Paper title search
 
 **Output:**
-- Extracted markdown with metadata header
-- BibTeX file (`citation.bib`)
-- Citation list (`references.txt` with `--references`)
+- Downloaded PDF
+- Log file with retrieval details
 
 ```bash
 # Install paper support (includes PDF extraction)
 uv sync --extra paper
 
-# Basic paper acquisition by DOI
-ingestor paper 10.1038/nature12373
+# Basic paper retrieval by DOI
+parser retrieve --doi "10.1038/nature12373"
+parser retrieve -d "10.1038/nature12373"
 
 # arXiv papers
-ingestor paper arXiv:1706.03762
-ingestor paper 2301.12345
-ingestor paper https://arxiv.org/abs/1706.03762
+parser retrieve arXiv:1706.03762
+parser retrieve 2301.12345
+parser retrieve https://arxiv.org/abs/1706.03762
 
 # Search by title
-ingestor paper "Attention Is All You Need"
+parser retrieve --title "Attention Is All You Need"
+parser retrieve -t "Deep Residual Learning for Image Recognition"
 
-# With citation references (builds citation graph)
-ingestor paper arXiv:1706.03762 --references --max-refs 50
+# Direct PDF URL
+parser retrieve "https://arxiv.org/pdf/1706.03762.pdf"
 
-# Skip markdown extraction (PDF + BibTeX only, like paper-acq)
-ingestor paper 10.1038/nature12373 --no-markdown
+# With output directory and email for API access
+parser retrieve -d "10.1038/nature12373" -o ./papers -e your@email.com
 
-# Get just metadata (no PDF download)
-ingestor paper-meta 10.1038/nature12373 --format bibtex
+# Skip if already downloaded (default), or force re-download
+parser retrieve -t "BERT" --no-skip-existing
 ```
+
+#### DOI to BibTeX (doi2bib)
+
+Convert DOI or arXiv identifiers to BibTeX citations (like the original [doi2bib](https://github.com/davidagraf/doi2bib) tool):
+
+```bash
+# Single DOI to BibTeX (prints to stdout)
+parser doi2bib 10.1038/s41586-020-2649-2
+
+# arXiv ID
+parser doi2bib arXiv:1706.03762
+
+# Save to file
+parser doi2bib 10.1038/nature12373 -o numpy.bib
+
+# Different output formats
+parser doi2bib 10.1038/nature12373 --format json
+parser doi2bib 10.1038/nature12373 --format markdown
+
+# Process multiple identifiers from a file
+parser doi2bib -i dois.txt -o citations/
+
+# With Semantic Scholar API key (for better metadata)
+parser doi2bib 10.1038/nature12373 --s2-key YOUR_API_KEY
+```
+
+**Input file format (one per line):**
+```
+10.1038/s41586-020-2649-2
+arXiv:1706.03762
+10.1126/science.1234567
+# Comments are ignored
+```
+
+**Output formats:**
+- `bibtex` (default): Standard BibTeX format
+- `json`: Full metadata as JSON
+- `markdown`: Formatted citation text
 
 #### Output Example
 
 ```bash
-ingestor paper arXiv:1706.03762 --references -o output/paper_test
+parser retrieve -t \"Attention Is All You Need\" -o output/papers
 ```
 
 ```
-output/paper_test/
-├── Vaswani_2017_Attention_Is_All_You_Need.pdf  # Downloaded PDF
-├── Vaswani_2017_Attention_Is_All_You_Need.md   # Markdown with metadata header
-├── citation.bib                                 # BibTeX citation
-└── references.txt                               # Citation list (41 citations)
+output/papers/
+├── Attention_Is_All_You_Need.pdf   # Downloaded PDF
+└── Attention Is All You Need.log   # Retrieval log with source info
 ```
 
-**Markdown with metadata header:**
-```yaml
----
-title: "Attention Is All You Need"
-authors: ['Ashish Vaswani', 'Noam Shazeer', ...]
-year: 2017
-doi: "10.48550/arXiv.1706.03762"
-arxiv: "1706.03762"
-abstract: "The dominant sequence transduction models..."
-source_pdf: "Vaswani_2017_Attention_Is_All_You_Need.pdf"
----
-
-## Attention Is All You Need
-...
-```
+**Retrieval sources (tried in order):**
+1. Unpaywall (requires email)
+2. arXiv (preprints)
+3. PMC (PubMed Central)
+4. bioRxiv/medRxiv (preprints)
+5. Semantic Scholar
+6. OpenAlex
+7. Web search
 
 #### Batch Paper Processing
 
@@ -227,13 +264,13 @@ Process multiple papers from a file (CSV, JSON, or TXT):
 
 ```bash
 # From CSV with 'doi' and/or 'title' columns
-ingestor paper-batch papers.csv -o ./output
+parser batch papers.csv -o ./output
 
 # From JSON array
-ingestor paper-batch references.json --concurrency 5
+parser batch references.json --concurrency 5
 
 # From TXT (one identifier per line)
-ingestor paper-batch dois.txt -o ./papers
+parser batch dois.txt -o ./papers
 ```
 
 **CSV format:**
@@ -267,19 +304,19 @@ Verify BibTeX citations against academic databases (CrossRef, arXiv):
 
 ```bash
 # Verify a single .bib file
-ingestor verify-bib references.bib -o ./verified
+parser verify references.bib -o ./verified
 
 # Verify a directory of .bib files
-ingestor verify-bib ./citations -o ./output
+parser verify ./citations -o ./output
 
 # With manual pre-verified entries
-ingestor verify-bib refs.bib --manual custom.bib
+parser verify refs.bib --manual custom.bib
 
 # Skip specific citation keys
-ingestor verify-bib refs.bib --skip website1 --skip github2
+parser verify refs.bib --skip website1 --skip github2
 
 # Dry run (see what would happen)
-ingestor verify-bib refs.bib --dry-run -v
+parser verify refs.bib --dry-run -v
 ```
 
 **Output structure:**
@@ -302,7 +339,7 @@ verified/
 See available sources and their status:
 
 ```bash
-ingestor paper-sources
+parser sources
 ```
 
 Output:
@@ -320,7 +357,7 @@ Paper Acquisition Sources
 | CrossRef         | ✓      | DOI metadata         | Polite pool: ✓ |
 | Semantic Scholar | ✓      | Metadata & citations | API key: ○ Optional |
 | OpenAlex         | ✓      | Metadata             | Email: ✓ |
-| Institutional    | ○      | EZProxy/VPN access   | Run: ingestor paper-auth |
+| Institutional    | ○      | EZProxy/VPN access   | Run: parser auth |
 | WebSearch        | ○      | Claude SDK search    | pip install claude-code-sdk |
 
 Not Implemented (Legal Concerns):
@@ -334,10 +371,10 @@ Access papers through your university's subscriptions (IEEE, ACM, Elsevier, etc.
 
 ```bash
 # EZProxy mode - opens browser for Shibboleth/SAML login
-ingestor paper-auth --proxy-url "https://ezproxy.university.edu/login?url="
+parser auth --proxy-url "https://ezproxy.university.edu/login?url="
 
 # VPN mode - runs your VPN connection script
-ingestor paper-auth --vpn-script ~/vpn-connect.sh
+parser auth --vpn-script ~/vpn-connect.sh
 ```
 
 **Environment variables:**
@@ -357,13 +394,13 @@ Sync your paper acquisition config across machines using GitHub Gists:
 
 ```bash
 # Create config file
-ingestor paper-init
+parser init
 
 # Push config to a private gist
-ingestor paper-config-push
+parser config-push
 
 # Pull config on another machine
-ingestor paper-config-pull --gist-id abc123def456
+parser config-pull --gist-id abc123def456
 ```
 
 **Requirements:**
@@ -466,6 +503,34 @@ Paper abstract text...
 
 Full paper content extracted from PDF...
 ```
+
+### Deep Research
+
+> **Note:** Deep research commands use the `researcher` CLI tool.
+
+AI-powered deep research using Google Gemini to conduct comprehensive research on any topic.
+
+```bash
+# Install research support
+uv sync --extra researcher
+
+# Conduct deep research on a topic
+researcher research "quantum computing applications in drug discovery"
+
+# With custom output directory
+researcher research "machine learning for climate modeling" -o ./research_output
+
+# With verbose output
+researcher research "renewable energy storage solutions" -v
+```
+
+**Requirements:**
+- Google Gemini API key (`GOOGLE_API_KEY` environment variable)
+- `uv sync --extra researcher`
+
+**Output:**
+- Comprehensive research report in markdown format
+- Structured analysis with citations and sources
 
 ### Web Crawling
 ```bash

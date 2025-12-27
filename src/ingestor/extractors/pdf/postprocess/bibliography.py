@@ -49,7 +49,7 @@ def _format_reference_entries(references_text: str) -> str:
     Handles entries with or without anchor tags.
     """
     lines = references_text.split("\n")
-    result = []
+    result: list[str] = []
     prev_was_reference = False
 
     for line in lines:
@@ -60,9 +60,8 @@ def _format_reference_entries(references_text: str) -> str:
         )
 
         # Add blank line before new reference if previous line wasn't blank
-        if is_reference_start and prev_was_reference:
-            if result and result[-1].strip() != "":
-                result.append("")
+        if is_reference_start and prev_was_reference and result and result[-1].strip() != "":
+            result.append("")
 
         result.append(line)
         prev_was_reference = is_reference_start or (

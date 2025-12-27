@@ -1,13 +1,13 @@
 """Unit tests for PDF extractor."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch, AsyncMock
 
 from ingestor.extractors.pdf import (
-    PdfExtractor,
-    PdfConfig,
     DoclingNotInstalledError,
+    PdfConfig,
+    PdfExtractor,
     PyMuPDFNotInstalledError,
 )
 from ingestor.types import MediaType
@@ -147,7 +147,7 @@ class TestPdfExtractorWithMocks:
             mock_result.images = []
             mock_docling.return_value = mock_result
 
-            result = await extractor.extract(pdf_file)
+            await extractor.extract(pdf_file)
 
             mock_docling.assert_called_once_with(pdf_file)
 
@@ -166,7 +166,7 @@ class TestPdfExtractorWithMocks:
                 mock_result.images = []
                 mock_pymupdf.return_value = mock_result
 
-                result = await extractor.extract(pdf_file)
+                await extractor.extract(pdf_file)
 
                 mock_pymupdf.assert_called_once()
 

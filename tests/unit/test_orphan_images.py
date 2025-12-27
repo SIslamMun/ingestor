@@ -1,15 +1,13 @@
 """Unit tests for orphan image detection and recovery."""
 
-import pytest
 
 from ingestor.postprocess.orphan_images import (
-    detect_orphan_images,
-    recover_orphan_images,
-    find_figure_references,
-    analyze_document_structure,
-    smart_insert_images,
     _generate_alt_text,
-    OrphanImageResult,
+    analyze_document_structure,
+    detect_orphan_images,
+    find_figure_references,
+    recover_orphan_images,
+    smart_insert_images,
 )
 
 
@@ -313,7 +311,7 @@ The methodology involves several steps.
         """Test handling when no images provided."""
         markdown = "# Test\n\n![Missing](./img/missing.png)"
         result = detect_orphan_images(markdown, [])
-        
+
         assert not result.has_orphans
         assert result.total_images == 0
         assert result.has_missing

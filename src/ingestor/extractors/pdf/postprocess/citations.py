@@ -61,7 +61,7 @@ def _expand_citation_ranges(content: str) -> str:
     [11]-[14] → [11], [12], [13], [14]
     """
 
-    def expand_range(match: re.Match) -> str:
+    def expand_range(match: re.Match[str]) -> str:
         start = int(match.group(1))
         end = int(match.group(2))
         if start > end:
@@ -81,7 +81,7 @@ def _link_single_citations(content: str) -> str:
     Avoids already-linked citations and image/link syntax.
     """
 
-    def link_citation(match: re.Match) -> str:
+    def link_citation(match: re.Match[str]) -> str:
         # Check if this is already part of a link or image
         prefix = match.string[max(0, match.start() - 2) : match.start()]
         if prefix.endswith("](") or prefix.endswith("!["):
@@ -103,7 +103,7 @@ def _add_reference_anchors(references: str) -> str:
     [1] Author... → <a id="ref-1"></a>[1] Author...
     """
 
-    def add_anchor(match: re.Match) -> str:
+    def add_anchor(match: re.Match[str]) -> str:
         num = match.group(1)
         return f'<a id="ref-{num}"></a>[{num}]'
 

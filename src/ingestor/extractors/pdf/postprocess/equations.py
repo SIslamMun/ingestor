@@ -34,7 +34,7 @@ def process_equations(content: str) -> str:
 def _fix_formula_placeholders(content: str) -> str:
     """
     Convert formula placeholder comments to a cleaner format.
-    
+
     <!-- formula-not-decoded --> → [Formula not decoded]
     """
     content = re.sub(
@@ -49,41 +49,41 @@ def _fix_formula_placeholders(content: str) -> str:
 def _clean_latex_spacing(content: str) -> str:
     """
     Fix spacing issues in LaTeX equations from OCR.
-    
+
     Handles patterns like:
     - "O r e p a l i n s i t y" → "Operationality" (spaced letters)
     - Extra spaces around operators
     """
-    def clean_equation(match: re.Match) -> str:
+    def clean_equation(match: re.Match[str]) -> str:
         eq = match.group(1)
-        
+
         # Fix spaced-out words (common OCR artifact)
         # Pattern: single letters separated by spaces that form words
         # e.g., "F l o a t i n g" → "Floating"
         eq = _fix_spaced_words(eq)
-        
+
         # Fix extra spaces around common LaTeX commands
         eq = re.sub(r"\\\s+", r"\\", eq)  # \\ frac → \\frac
         eq = re.sub(r"\\text\s*\{", r"\\text{", eq)
         eq = re.sub(r"\\frac\s*\{", r"\\frac{", eq)
         eq = re.sub(r"\\min\s*\(", r"\\min(", eq)
         eq = re.sub(r"\\max\s*\(", r"\\max(", eq)
-        
+
         # Clean up multiple spaces
         eq = re.sub(r"\s{2,}", " ", eq)
-        
+
         return f"$${eq}$$"
-    
+
     # Process display math ($$...$$)
     content = re.sub(r"\$\$(.*?)\$\$", clean_equation, content, flags=re.DOTALL)
-    
+
     return content
 
 
 def _fix_spaced_words(text: str) -> str:
     """
     Fix words that have spaces between each letter (OCR artifact).
-    
+
     e.g., "F l o a t i n g" → "Floating"
     """
     # Common words that appear spaced in equations
@@ -105,10 +105,10 @@ def _fix_spaced_words(text: str) -> str:
         (r"I\s*O\s*P\s*S", "IOPS"),
         (r"I\s*O\s*P\s*s", "IOPS"),
     ]
-    
+
     for pattern, replacement in spaced_patterns:
         text = re.sub(pattern, replacement, text)
-    
+
     return text
 
 
@@ -116,9 +116,9 @@ def _fix_common_ocr_artifacts(content: str) -> str:
     """
     Fix common OCR artifacts in equations.
     """
-    def fix_equation(match: re.Match) -> str:
+    def fix_equation(match: re.Match[str]) -> str:
         eq = match.group(1)
-        
+
         # Fix common OCR misreads using simple string replace (not regex)
         # to avoid issues with LaTeX backslashes
         simple_replacements = [
@@ -126,30 +126,30 @@ def _fix_common_ocr_artifacts(content: str) -> str:
             ("rerferred", "transferred"),
             ("Mermoy", "Memory"),
         ]
-        
+
         for old, new in simple_replacements:
             eq = eq.replace(old, new)
-        
+
         # Fix equation number at end: "  (2)  " → " \quad (2)"
         eq = re.sub(r"\s*\(\s*(\d+)\s*\)\s*$", r" \\quad (\1)", eq)
-        
+
         return f"$${eq}$$"
-    
+
     content = re.sub(r"\$\$(.*?)\$\$", fix_equation, content, flags=re.DOTALL)
-    
+
     return content
 
 
 def _normalize_equation_delimiters(content: str) -> str:
     """
     Normalize equation delimiters for consistency.
-    
+
     Ensures proper spacing around display equations.
     """
     # Ensure blank line before display equations
     content = re.sub(r"([^\n])\n(\$\$)", r"\1\n\n\2", content)
-    
+
     # Ensure blank line after display equations
     content = re.sub(r"(\$\$)\n([^\n])", r"\1\n\n\2", content)
-    
+
     return content

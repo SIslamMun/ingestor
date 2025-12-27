@@ -1,7 +1,7 @@
 """Integration tests for web extraction with Crawl4AI."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.types import MediaType
 
@@ -9,8 +9,8 @@ from ingestor.types import MediaType
 def playwright_browsers_installed() -> bool:
     """Check if playwright browsers are installed."""
     try:
-        from pathlib import Path
         import os
+        from pathlib import Path
 
         # Check common playwright browser locations
         if os.name == "nt":  # Windows

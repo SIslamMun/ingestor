@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from ...types import ExtractionResult, MediaType
 from ..base import BaseExtractor
@@ -17,7 +17,7 @@ class JsonExtractor(BaseExtractor):
 
     media_type = MediaType.JSON
 
-    async def extract(self, source: Union[str, Path]) -> ExtractionResult:
+    async def extract(self, source: str | Path) -> ExtractionResult:
         """Extract content from a JSON file.
 
         Args:
@@ -28,14 +28,14 @@ class JsonExtractor(BaseExtractor):
         """
         path = Path(source)
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
 
         # Generate markdown representation
         markdown = self._json_to_markdown(data, path.stem)
 
         # Collect metadata
-        metadata = {
+        metadata: dict[str, Any] = {
             "type": type(data).__name__,
         }
         if isinstance(data, list):
@@ -95,7 +95,7 @@ class JsonExtractor(BaseExtractor):
 
         return "\n".join(lines)
 
-    def _is_tabular(self, data: list) -> bool:
+    def _is_tabular(self, data: list[Any]) -> bool:
         """Check if list can be represented as a table.
 
         Args:
@@ -114,7 +114,7 @@ class JsonExtractor(BaseExtractor):
         first_keys = set(data[0].keys())
         return all(set(item.keys()) == first_keys for item in data)
 
-    def _list_to_table(self, data: list) -> str:
+    def _list_to_table(self, data: list[Any]) -> str:
         """Convert list of dicts to markdown table.
 
         Args:
@@ -142,7 +142,7 @@ class JsonExtractor(BaseExtractor):
 
         return "\n".join(rows)
 
-    def supports(self, source: Union[str, Path]) -> bool:
+    def supports(self, source: str | Path) -> bool:
         """Check if this extractor handles the source.
 
         Args:

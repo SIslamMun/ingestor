@@ -1,8 +1,8 @@
 """Router for directing inputs to the appropriate extractors."""
 
 import asyncio
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator, List, Optional, Union
 
 from ..types import ExtractionResult, IngestConfig, MediaType
 from .registry import ExtractorRegistry
@@ -17,7 +17,7 @@ class Router:
     - .url file processing (files containing URLs to crawl)
     """
 
-    def __init__(self, registry: ExtractorRegistry, config: Optional[IngestConfig] = None):
+    def __init__(self, registry: ExtractorRegistry, config: IngestConfig | None = None):
         """Initialize the router.
 
         Args:
@@ -27,7 +27,7 @@ class Router:
         self.registry = registry
         self.config = config or IngestConfig()
 
-    async def process(self, source: Union[str, Path]) -> ExtractionResult:
+    async def process(self, source: str | Path) -> ExtractionResult:
         """Process a single source (file or URL).
 
         Args:
@@ -49,7 +49,7 @@ class Router:
         return await extractor.extract(source)
 
     async def process_batch(
-        self, sources: List[Union[str, Path]], concurrency: int = 5
+        self, sources: list[str | Path], concurrency: int = 5
     ) -> AsyncIterator[ExtractionResult]:
         """Process multiple sources concurrently.
 
@@ -62,7 +62,7 @@ class Router:
         """
         semaphore = asyncio.Semaphore(concurrency)
 
-        async def process_with_semaphore(source: Union[str, Path]) -> ExtractionResult:
+        async def process_with_semaphore(source: str | Path) -> ExtractionResult:
             async with semaphore:
                 return await self.process(source)
 
@@ -73,7 +73,7 @@ class Router:
 
     async def process_directory(
         self,
-        directory: Union[str, Path],
+        directory: str | Path,
         recursive: bool = True,
         concurrency: int = 5,
     ) -> AsyncIterator[ExtractionResult]:
@@ -92,7 +92,7 @@ class Router:
             raise ValueError(f"Not a directory: {directory}")
 
         # Collect all files
-        sources: List[Path] = []
+        sources: list[str | Path] = []
         pattern = "**/*" if recursive else "*"
 
         for path in directory.glob(pattern):
@@ -110,7 +110,7 @@ class Router:
         async for result in self.process_batch(sources, concurrency):
             yield result
 
-    def _parse_url_file(self, path: Path) -> List[str]:
+    def _parse_url_file(self, path: Path) -> list[str]:
         """Parse a .url file containing URLs to crawl.
 
         Each line in the file should be a URL. Empty lines and lines
@@ -122,9 +122,9 @@ class Router:
         Returns:
             List of URLs from the file
         """
-        urls: List[str] = []
+        urls: list[str] = []
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#"):
@@ -133,7 +133,7 @@ class Router:
             pass
         return urls
 
-    def _parse_download_git_file(self, path: Path) -> List[str]:
+    def _parse_download_git_file(self, path: Path) -> list[str]:
         """Parse a .download_git file containing git repository URLs.
 
         Each line in the file should be a git URL (HTTPS, SSH, or git://).
@@ -145,9 +145,9 @@ class Router:
         Returns:
             List of git URLs from the file
         """
-        urls: List[str] = []
+        urls: list[str] = []
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#"):
@@ -156,7 +156,7 @@ class Router:
             pass
         return urls
 
-    def detect_type(self, source: Union[str, Path]) -> MediaType:
+    def detect_type(self, source: str | Path) -> MediaType:
         """Detect the media type of a source.
 
         Args:
@@ -167,7 +167,7 @@ class Router:
         """
         return self.registry.detector.detect(source)
 
-    def can_process(self, source: Union[str, Path]) -> bool:
+    def can_process(self, source: str | Path) -> bool:
         """Check if a source can be processed.
 
         Args:

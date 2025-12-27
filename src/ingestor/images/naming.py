@@ -2,7 +2,6 @@
 
 import re
 from pathlib import Path
-from typing import Optional
 
 from ..types import ExtractedImage
 
@@ -19,7 +18,7 @@ class ImageNamer:
     def __init__(
         self,
         pattern: str = "figure_{num:03d}",
-        prefix: Optional[str] = None,
+        prefix: str | None = None,
     ):
         """Initialize image namer.
 
@@ -32,7 +31,7 @@ class ImageNamer:
         self._counter = 0
         self._page_counters: dict[int, int] = {}
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset counters."""
         self._counter = 0
         self._page_counters.clear()
@@ -40,7 +39,7 @@ class ImageNamer:
     def generate(
         self,
         image: ExtractedImage,
-        source_name: Optional[str] = None,
+        source_name: str | None = None,
     ) -> str:
         """Generate a filename for an image.
 
@@ -95,7 +94,7 @@ class ImageNamer:
     def rename(
         self,
         image: ExtractedImage,
-        source_name: Optional[str] = None,
+        source_name: str | None = None,
     ) -> ExtractedImage:
         """Rename an image and return a new ExtractedImage.
 
@@ -121,7 +120,7 @@ class ImageNamer:
     def rename_all(
         self,
         images: list[ExtractedImage],
-        source_name: Optional[str] = None,
+        source_name: str | None = None,
     ) -> list[ExtractedImage]:
         """Rename all images with consistent naming.
 
@@ -172,7 +171,7 @@ PATTERNS = {
 }
 
 
-def create_namer(style: str = "sequential", prefix: Optional[str] = None) -> ImageNamer:
+def create_namer(style: str = "sequential", prefix: str | None = None) -> ImageNamer:
     """Create an image namer with a predefined style.
 
     Args:

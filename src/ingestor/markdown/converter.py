@@ -1,7 +1,6 @@
 """Markdown conversion utilities using markdownify."""
 
 import re
-from typing import List, Optional
 
 
 class MarkdownConverter:
@@ -14,7 +13,7 @@ class MarkdownConverter:
     def __init__(
         self,
         heading_style: str = "ATX",
-        strip_tags: Optional[List[str]] = None,
+        strip_tags: list[str] | None = None,
         autolinks: bool = True,
         escape_asterisks: bool = True,
         escape_underscores: bool = True,
@@ -108,7 +107,7 @@ class MarkdownConverter:
 def html_to_markdown(
     html: str,
     heading_style: str = "ATX",
-    strip_tags: Optional[List[str]] = None,
+    strip_tags: list[str] | None = None,
 ) -> str:
     """Convert HTML to Markdown.
 

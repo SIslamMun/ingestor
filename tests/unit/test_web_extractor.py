@@ -1,7 +1,7 @@
 """Real unit tests for Web extractor - no mocking."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.extractors.web.web_extractor import WebExtractor
 from ingestor.types import MediaType
@@ -13,7 +13,7 @@ class TestWebExtractorInit:
     def test_default_init(self):
         """Test default initialization."""
         extractor = WebExtractor()
-        
+
         assert extractor.strategy == "bfs"
         assert extractor.max_depth == 2
         assert extractor.max_pages == 50
@@ -31,7 +31,7 @@ class TestWebExtractorInit:
             exclude_patterns=["*/login/*"],
             same_domain=False,
         )
-        
+
         assert extractor.strategy == "dfs"
         assert extractor.max_depth == 5
         assert extractor.max_pages == 100
@@ -78,14 +78,14 @@ class TestWebExtractorCanExtract:
         """Test supports returns False for local files."""
         test_file = tmp_path / "test.html"
         test_file.write_text("<html></html>")
-        
+
         assert not extractor.supports(str(test_file))
 
     def test_supports_url_file(self, extractor, tmp_path):
         """Test supports for .url files."""
         url_file = tmp_path / "bookmark.url"
         url_file.write_text("[InternetShortcut]\nURL=https://example.com")
-        
+
         # .url files should be extractable
         assert extractor.supports(str(url_file))
 
@@ -101,7 +101,7 @@ class TestWebExtractorURLFile:
         """Test reading standard .url file format."""
         url_file = tmp_path / "test.url"
         url_file.write_text("[InternetShortcut]\nURL=https://example.com/page")
-        
+
         url = extractor._read_url_file(url_file)
         assert url == "https://example.com/page"
 
@@ -109,7 +109,7 @@ class TestWebExtractorURLFile:
         """Test reading plain text .url file."""
         url_file = tmp_path / "test.url"
         url_file.write_text("https://example.com/page")
-        
+
         url = extractor._read_url_file(url_file)
         assert url == "https://example.com/page"
 
@@ -117,7 +117,7 @@ class TestWebExtractorURLFile:
         """Test reading .url file with whitespace."""
         url_file = tmp_path / "test.url"
         url_file.write_text("  https://example.com/page  \n")
-        
+
         url = extractor._read_url_file(url_file)
         assert url == "https://example.com/page"
 
@@ -135,7 +135,7 @@ class TestWebExtractorRealExtraction:
         """Test extracting a simple web page."""
         # Use a reliable, simple page
         result = await extractor.extract("https://example.com")
-        
+
         assert result is not None
         assert result.media_type == MediaType.WEB
         assert len(result.markdown) > 0
@@ -146,7 +146,7 @@ class TestWebExtractorRealExtraction:
     async def test_extract_page_title(self, extractor):
         """Test that page title is extracted."""
         result = await extractor.extract("https://example.com")
-        
+
         assert result.title is not None
         assert len(result.title) > 0
 
@@ -155,7 +155,7 @@ class TestWebExtractorRealExtraction:
     async def test_extract_page_metadata(self, extractor):
         """Test that metadata is captured."""
         result = await extractor.extract("https://example.com")
-        
+
         assert result.metadata is not None
         assert result.source == "https://example.com"
 
@@ -164,7 +164,7 @@ class TestWebExtractorRealExtraction:
     async def test_extract_invalid_url(self, extractor):
         """Test extracting from invalid URL."""
         result = await extractor.extract("https://this-domain-does-not-exist-12345.com")
-        
+
         # Should return error result
         assert result is not None
         assert "Error" in result.markdown or "error" in result.metadata.get("error", "")
@@ -174,7 +174,7 @@ class TestWebExtractorRealExtraction:
     async def test_extract_python_docs(self, extractor):
         """Test extracting Python documentation page."""
         result = await extractor.extract("https://docs.python.org/3/tutorial/appetite.html")
-        
+
         assert result is not None
         assert len(result.markdown) > 100
         # Should contain some Python-related content
@@ -219,7 +219,7 @@ class TestWebExtractorPatterns:
         """Test same domain restriction."""
         extractor = WebExtractor(same_domain=True)
         assert extractor.same_domain is True
-        
+
         extractor2 = WebExtractor(same_domain=False)
         assert extractor2.same_domain is False
 

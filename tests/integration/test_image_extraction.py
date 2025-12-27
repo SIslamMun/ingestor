@@ -1,7 +1,7 @@
 """Integration tests for image extraction."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.extractors.image import ImageExtractor
 from ingestor.types import MediaType

@@ -1,20 +1,20 @@
 """Tests for citation verifier module."""
 
+
 import pytest
-from pathlib import Path
-from ingestor.extractors.paper.verifier import (
+
+from parser.doi2bib.verifier import (
     BibEntry,
     CitationVerifier,
-    VerificationResult,
     VerificationStats,
-    clean_doi,
-    normalize,
-    titles_match,
-    is_website,
-    get_arxiv_doi,
-    replace_key,
     add_access_date,
+    clean_doi,
+    get_arxiv_doi,
+    is_website,
+    normalize,
     parse_bib_file,
+    replace_key,
+    titles_match,
 )
 
 
@@ -283,7 +283,7 @@ class TestParseBibFile:
 }"""
         bib_file = tmp_path / "test.bib"
         bib_file.write_text(bib_content)
-        
+
         entries = parse_bib_file(bib_file)
         assert len(entries) == 2
         assert entries[0].key == "paper1"
@@ -293,7 +293,7 @@ class TestParseBibFile:
         """Test parsing empty file."""
         bib_file = tmp_path / "empty.bib"
         bib_file.write_text("")
-        
+
         entries = parse_bib_file(bib_file)
         assert len(entries) == 0
 
@@ -344,10 +344,10 @@ class TestCitationVerifier:
             raw="@misc{github_test,\n  title = {Test},\n  url = {https://github.com/test}\n}",
             url="https://github.com/test",
         )
-        
+
         result = await verifier.verify_entry(entry)
         assert result.status == "website"
-        assert "github_test" == result.key
+        assert result.key == "github_test"
         assert "Last accessed:" in result.bibtex
 
     @pytest.mark.asyncio
@@ -358,7 +358,7 @@ class TestCitationVerifier:
             entry_type="article",
             raw="@article{skip_me,\n  title = {Test}\n}",
         )
-        
+
         result = await verifier.verify_entry(entry, skip_keys={"skip_me"})
         assert result.status == "manual"
         assert "skipped verification" in result.message.lower()
@@ -373,13 +373,13 @@ class TestCitationVerifier:
         bib_file = tmp_path / "test.bib"
         bib_file.write_text(bib_content)
         output_dir = tmp_path / "output"
-        
+
         stats, results = await verifier.verify_file(
             input_path=bib_file,
             output_dir=output_dir,
             dry_run=True,
         )
-        
+
         # Output should not be created
         assert not output_dir.exists()
         # But results should be returned
@@ -396,18 +396,18 @@ class TestCitationVerifier:
         bib_file = tmp_path / "test.bib"
         bib_file.write_text(bib_content)
         output_dir = tmp_path / "output"
-        
+
         stats, results = await verifier.verify_file(
             input_path=bib_file,
             output_dir=output_dir,
             dry_run=False,
         )
-        
+
         # Check output files
         assert (output_dir / "verified.bib").exists()
         assert (output_dir / "failed.bib").exists()
         assert (output_dir / "report.md").exists()
-        
+
         # Check verified.bib content
         verified_content = (output_dir / "verified.bib").read_text()
         assert "github_test" in verified_content

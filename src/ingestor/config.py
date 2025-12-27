@@ -1,7 +1,6 @@
 """Configuration management using Pydantic."""
 
 from pathlib import Path
-from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -21,8 +20,8 @@ class WebConfig(BaseModel):
     max_depth: int = Field(default=2, description="Maximum crawl depth")
     max_pages: int = Field(default=50, description="Maximum pages to crawl")
     same_domain: bool = Field(default=True, description="Restrict to same domain")
-    include_patterns: List[str] = Field(default_factory=list, description="URL patterns to include")
-    exclude_patterns: List[str] = Field(default_factory=list, description="URL patterns to exclude")
+    include_patterns: list[str] = Field(default_factory=list, description="URL patterns to include")
+    exclude_patterns: list[str] = Field(default_factory=list, description="URL patterns to exclude")
 
 
 class YouTubeConfig(BaseModel):
@@ -30,7 +29,7 @@ class YouTubeConfig(BaseModel):
 
     caption_type: str = Field(default="auto", description="Caption type (auto, manual)")
     include_playlist: bool = Field(default=False, description="Process entire playlist")
-    languages: List[str] = Field(default=["en"], description="Preferred languages")
+    languages: list[str] = Field(default=["en"], description="Preferred languages")
 
 
 class AudioConfig(BaseModel):
@@ -79,7 +78,7 @@ class IngestorConfig(BaseModel):
         """
         import yaml
 
-        with open(path, "r") as f:
+        with open(path) as f:
             data = yaml.safe_load(f)
 
         return cls(**data) if data else cls()
@@ -98,7 +97,7 @@ class IngestorConfig(BaseModel):
     @classmethod
     def from_cli_args(
         cls,
-        output: Optional[Path] = None,
+        output: Path | None = None,
         keep_raw: bool = False,
         img_to: str = "png",
         describe: bool = False,
@@ -145,7 +144,7 @@ class IngestorConfig(BaseModel):
         return config
 
 
-def load_config(path: Optional[Path] = None) -> IngestorConfig:
+def load_config(path: Path | None = None) -> IngestorConfig:
     """Load configuration from file or return defaults.
 
     Args:

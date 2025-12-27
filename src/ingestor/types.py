@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 
 class MediaType(Enum):
@@ -53,10 +53,10 @@ class ExtractedImage:
     filename: str
     data: bytes
     format: str  # png, jpg, gif, etc.
-    page: Optional[int] = None  # Page/slide number where image was found
-    caption: Optional[str] = None  # Extracted caption if available
-    context: Optional[str] = None  # Surrounding text for context
-    description: Optional[str] = None  # VLM-generated description (if --describe)
+    page: int | None = None  # Page/slide number where image was found
+    caption: str | None = None  # Extracted caption if available
+    context: str | None = None  # Surrounding text for context
+    description: str | None = None  # VLM-generated description (if --describe)
 
     @property
     def size_bytes(self) -> int:
@@ -69,12 +69,12 @@ class ExtractionResult:
     """Result of extracting content from a source."""
 
     markdown: str
-    title: Optional[str] = None
-    source: Optional[str] = None  # Original file path or URL
-    media_type: Optional[MediaType] = None
+    title: str | None = None
+    source: str | None = None  # Original file path or URL
+    media_type: MediaType | None = None
     images: list[ExtractedImage] = field(default_factory=list)
-    metadata: dict = field(default_factory=dict)
-    charset: Optional[str] = None  # Detected charset for text files
+    metadata: dict[str, Any] = field(default_factory=dict)
+    charset: str | None = None  # Detected charset for text files
 
     @property
     def has_images(self) -> bool:

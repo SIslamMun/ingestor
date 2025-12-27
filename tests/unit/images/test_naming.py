@@ -1,8 +1,7 @@
 """Tests for ImageNamer."""
 
-import pytest
 
-from ingestor.images.naming import ImageNamer, create_namer, PATTERNS
+from ingestor.images.naming import PATTERNS, ImageNamer, create_namer
 from ingestor.types import ExtractedImage
 
 

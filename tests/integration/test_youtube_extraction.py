@@ -1,7 +1,7 @@
 """Integration tests for YouTube extraction."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.types import MediaType
 
@@ -101,3 +101,55 @@ class TestYouTubeConfig:
 
         extractor = YouTubeExtractor(languages=["es", "en"])
         assert extractor.languages == ["es", "en"]
+
+
+class TestYouTubeTranscriptAPI:
+    """Tests to verify youtube-transcript-api compatibility."""
+
+    @pytest.mark.network
+    def test_transcript_api_import(self):
+        """Test that youtube-transcript-api can be imported and has expected API."""
+        try:
+            from youtube_transcript_api import YouTubeTranscriptApi
+        except ImportError:
+            pytest.skip("youtube-transcript-api not installed")
+
+        # Verify the new API exists (instance-based)
+        ytt = YouTubeTranscriptApi()
+        assert hasattr(ytt, 'list'), "YouTubeTranscriptApi should have 'list' method"
+        assert hasattr(ytt, 'fetch'), "YouTubeTranscriptApi should have 'fetch' method"
+
+    @pytest.mark.network
+    def test_transcript_fetch_works(self):
+        """Test that transcript fetching works with a known video."""
+        try:
+            from youtube_transcript_api import YouTubeTranscriptApi
+        except ImportError:
+            pytest.skip("youtube-transcript-api not installed")
+
+        ytt = YouTubeTranscriptApi()
+        # Use a video known to have transcripts
+        video_id = "jNQXAC9IVRw"  # "Me at the zoo" - first YouTube video
+
+        try:
+            transcript_list = ytt.list(video_id)
+            assert transcript_list is not None, "Should return transcript list"
+
+            # Check we can iterate transcripts
+            for t in transcript_list:
+                assert hasattr(t, 'language_code'), "Transcript should have language_code"
+                assert hasattr(t, 'is_generated'), "Transcript should have is_generated"
+                break
+
+            # Fetch transcript
+            fetched = ytt.fetch(video_id)
+            assert fetched is not None, "Should return fetched transcript"
+            assert hasattr(fetched, 'snippets'), "FetchedTranscript should have snippets"
+            assert len(fetched.snippets) > 0, "Should have at least one snippet"
+
+            # Verify snippet structure
+            snippet = fetched.snippets[0]
+            assert hasattr(snippet, 'text'), "Snippet should have text attribute"
+
+        except Exception as e:
+            pytest.fail(f"Transcript API failed: {e}")

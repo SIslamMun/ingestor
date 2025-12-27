@@ -1,11 +1,11 @@
 """Real unit tests for CLI commands - no mocking."""
 
-import asyncio
-import pytest
 from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
 
-from ingestor.cli import main, create_config, _create_registry
+from ingestor.cli import _create_registry, create_config, main
 from ingestor.types import IngestConfig, MediaType
 
 
@@ -17,9 +17,9 @@ class TestCreateConfig:
         from unittest.mock import MagicMock
         ctx = MagicMock()
         ctx.params = {}
-        
+
         config = create_config(ctx)
-        
+
         assert isinstance(config, IngestConfig)
         assert config.output_dir == Path("./output")
         assert config.keep_raw_images is False
@@ -53,9 +53,9 @@ class TestCreateConfig:
             "ollama_host": "http://localhost:12345",
             "vlm_model": "moondream",
         }
-        
+
         config = create_config(ctx)
-        
+
         assert config.output_dir == Path("/custom/output")
         assert config.keep_raw_images is True
         assert config.target_image_format == "webp"
@@ -219,17 +219,17 @@ class TestIngestCommand:
         test_file = tmp_path / "test.txt"
         test_file.write_text("Hello World\n\nThis is a test file.")
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(output_dir),
         ])
-        
+
         assert result.exit_code == 0
         assert "Success" in result.output
         assert output_dir.exists()
-        
+
         # Check output was created
         md_files = list(output_dir.rglob("*.md"))
         assert len(md_files) >= 1
@@ -239,13 +239,13 @@ class TestIngestCommand:
         test_file = tmp_path / "test.json"
         test_file.write_text('{"name": "test", "value": 123}')
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(output_dir),
         ])
-        
+
         assert result.exit_code == 0
         assert "Success" in result.output
 
@@ -254,13 +254,13 @@ class TestIngestCommand:
         test_file = tmp_path / "test.csv"
         test_file.write_text("name,value\ntest,123\nhello,456")
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(output_dir),
         ])
-        
+
         assert result.exit_code == 0
         assert "Success" in result.output
 
@@ -269,13 +269,13 @@ class TestIngestCommand:
         test_file = tmp_path / "test.md"
         test_file.write_text("# Title\n\n## Section\n\nContent here.")
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(output_dir),
         ])
-        
+
         assert result.exit_code == 0
 
     def test_ingest_with_metadata_flag(self, runner, tmp_path):
@@ -283,14 +283,14 @@ class TestIngestCommand:
         test_file = tmp_path / "test.txt"
         test_file.write_text("Test content")
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(output_dir),
             "--metadata",
         ])
-        
+
         assert result.exit_code == 0
         # Metadata JSON should be created
         json_files = list(output_dir.rglob("*.json"))
@@ -301,14 +301,14 @@ class TestIngestCommand:
         test_file = tmp_path / "test.txt"
         test_file.write_text("Test content")
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(output_dir),
             "-v",
         ])
-        
+
         assert result.exit_code == 0
 
     def test_ingest_nonexistent_file(self, runner, tmp_path):
@@ -318,7 +318,7 @@ class TestIngestCommand:
             str(tmp_path / "nonexistent.txt"),
             "-o", str(tmp_path / "output"),
         ])
-        
+
         assert result.exit_code != 0
 
     def test_ingest_unsupported_extension(self, runner, tmp_path):
@@ -326,13 +326,13 @@ class TestIngestCommand:
         # Using a truly unsupported format
         test_file = tmp_path / "test.abc123xyz"
         test_file.write_bytes(b"\x00\x01\x02\x03")
-        
+
         result = runner.invoke(main, [
             "ingest",
             str(test_file),
             "-o", str(tmp_path / "output"),
         ])
-        
+
         # The system may handle as text or fail - either is acceptable
         # We just verify it doesn't crash
         assert result.exit_code in [0, 1]
@@ -350,13 +350,13 @@ class TestBatchCommand:
         input_dir = tmp_path / "input"
         input_dir.mkdir()
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "batch",
             str(input_dir),
             "-o", str(output_dir),
         ])
-        
+
         assert result.exit_code == 0
         assert "Completed" in result.output
 
@@ -364,20 +364,20 @@ class TestBatchCommand:
         """Test batch with multiple files."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
-        
+
         # Create test files
         (input_dir / "file1.txt").write_text("Content 1")
         (input_dir / "file2.txt").write_text("Content 2")
         (input_dir / "data.json").write_text('{"key": "value"}')
-        
+
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "batch",
             str(input_dir),
             "-o", str(output_dir),
         ])
-        
+
         assert result.exit_code == 0
         assert "Completed" in result.output
 
@@ -387,19 +387,19 @@ class TestBatchCommand:
         input_dir.mkdir()
         subdir = input_dir / "subdir"
         subdir.mkdir()
-        
+
         (input_dir / "root.txt").write_text("Root content")
         (subdir / "nested.txt").write_text("Nested content")
-        
+
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "batch",
             str(input_dir),
             "-o", str(output_dir),
             "--recursive",
         ])
-        
+
         assert result.exit_code == 0
         assert "Completed" in result.output
 
@@ -409,19 +409,19 @@ class TestBatchCommand:
         input_dir.mkdir()
         subdir = input_dir / "subdir"
         subdir.mkdir()
-        
+
         (input_dir / "root.txt").write_text("Root content")
         (subdir / "nested.txt").write_text("Nested content")
-        
+
         output_dir = tmp_path / "output"
-        
+
         result = runner.invoke(main, [
             "batch",
             str(input_dir),
             "-o", str(output_dir),
             "--no-recursive",
         ])
-        
+
         assert result.exit_code == 0
 
     def test_batch_nonexistent_folder(self, runner, tmp_path):
@@ -431,7 +431,7 @@ class TestBatchCommand:
             str(tmp_path / "nonexistent"),
             "-o", str(tmp_path / "output"),
         ])
-        
+
         assert result.exit_code != 0
 
     def test_batch_concurrency_option(self, runner, tmp_path):
@@ -439,14 +439,14 @@ class TestBatchCommand:
         input_dir = tmp_path / "input"
         input_dir.mkdir()
         (input_dir / "test.txt").write_text("Content")
-        
+
         result = runner.invoke(main, [
             "batch",
             str(input_dir),
             "-o", str(tmp_path / "output"),
             "--concurrency", "10",
         ])
-        
+
         assert result.exit_code == 0
 
 
@@ -463,7 +463,7 @@ class TestDescribeCommand:
             "describe",
             str(tmp_path / "nonexistent.png"),
         ])
-        
+
         assert result.exit_code != 0
 
 
@@ -481,7 +481,7 @@ class TestCloneCommand:
             "not-a-valid-url",
             "-o", str(tmp_path / "output"),
         ])
-        
+
         # Git extractor handles gracefully - just verify it completes
         assert result.exit_code in [0, 1]
 
@@ -492,7 +492,7 @@ class TestCloneCommand:
             str(tmp_path / "nonexistent_repo"),
             "-o", str(tmp_path / "output"),
         ])
-        
+
         # Git extractor handles gracefully - just verify it completes
         assert result.exit_code in [0, 1]
 
@@ -511,6 +511,6 @@ class TestCrawlCommand:
             "not-a-valid-url",
             "-o", str(tmp_path / "output"),
         ])
-        
+
         # Should fail or show error
         assert result.exit_code != 0 or "Error" in result.output

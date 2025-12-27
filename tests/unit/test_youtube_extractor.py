@@ -1,7 +1,7 @@
 """Real unit tests for YouTube extractor - no mocking."""
 
+
 import pytest
-from pathlib import Path
 
 from ingestor.extractors.youtube.youtube_extractor import YouTubeExtractor
 from ingestor.types import MediaType
@@ -13,7 +13,7 @@ class TestYouTubeExtractorInit:
     def test_default_init(self):
         """Test default initialization."""
         extractor = YouTubeExtractor()
-        
+
         assert extractor.caption_type == "auto"
         assert extractor.include_playlist is False
         assert extractor.languages == ["en"]
@@ -25,7 +25,7 @@ class TestYouTubeExtractorInit:
             include_playlist=True,
             languages=["en", "es", "fr"],
         )
-        
+
         assert extractor.caption_type == "manual"
         assert extractor.include_playlist is True
         assert extractor.languages == ["en", "es", "fr"]
@@ -148,7 +148,7 @@ class TestYouTubeExtractorCanExtract:
         """Test supports returns False for local files."""
         test_file = tmp_path / "video.mp4"
         test_file.write_bytes(b"fake video")
-        
+
         assert not extractor.supports(str(test_file))
 
 
@@ -166,9 +166,9 @@ class TestYouTubeExtractorRealExtraction:
         """Test extracting video metadata from a real video."""
         # Use a well-known video that should always exist
         url = "https://www.youtube.com/watch?v=jNQXAC9IVRw"  # "Me at the zoo" - first YT video
-        
+
         result = await extractor.extract(url)
-        
+
         assert result is not None
         assert result.media_type == MediaType.YOUTUBE
         assert result.title is not None
@@ -180,9 +180,9 @@ class TestYouTubeExtractorRealExtraction:
         """Test extracting video with captions."""
         # TED talks usually have good captions
         url = "https://www.youtube.com/watch?v=8jPQjjsBbIc"  # A TED talk
-        
+
         result = await extractor.extract(url)
-        
+
         assert result is not None
         # May or may not have transcript depending on video
 
@@ -190,9 +190,9 @@ class TestYouTubeExtractorRealExtraction:
     async def test_extract_invalid_video_id(self, extractor):
         """Test extracting with invalid video ID."""
         url = "https://www.youtube.com/watch?v=INVALID_ID_12345"
-        
+
         result = await extractor.extract(url)
-        
+
         # Should return error result
         assert result is not None
         # Will have error in markdown or metadata
@@ -201,7 +201,7 @@ class TestYouTubeExtractorRealExtraction:
     async def test_extract_invalid_url(self, extractor):
         """Test extracting from non-YouTube URL."""
         result = await extractor.extract("https://example.com/video")
-        
+
         assert result is not None
         assert "Error" in result.markdown or "Invalid" in result.markdown
 
@@ -225,9 +225,9 @@ class TestYouTubeExtractorMarkdownBuilder:
             "video_id": "test123",
         }
         transcript = "This is the transcript content."
-        
+
         markdown = extractor._build_markdown(metadata, transcript)
-        
+
         assert "Test Video" in markdown
         assert "Test Channel" in markdown
         assert "Transcript" in markdown
@@ -239,16 +239,16 @@ class TestYouTubeExtractorMarkdownBuilder:
             "channel": "Test Channel",
             "video_id": "test123",
         }
-        
+
         markdown = extractor._build_markdown(metadata, None)
-        
+
         assert "Test Video" in markdown
         assert "No transcript" in markdown or "Transcript" in markdown
 
     def test_build_markdown_empty_metadata(self, extractor):
         """Test building markdown with empty metadata."""
         markdown = extractor._build_markdown({}, "Some transcript")
-        
+
         assert len(markdown) > 0
         assert "Transcript" in markdown
 
@@ -308,13 +308,12 @@ class TestYouTubeExtractorEdgeCases:
     def test_shorts_url(self, extractor):
         """Test YouTube Shorts URL."""
         url = "https://www.youtube.com/shorts/abc123"
-        video_id = extractor._extract_video_id(url)
+        extractor._extract_video_id(url)
         # May or may not handle shorts depending on implementation
         # At minimum should not crash
 
     def test_live_stream_url(self, extractor):
         """Test live stream URL."""
-        url = "https://www.youtube.com/live/abc123"
         # Should handle live URLs
         assert extractor.supports("https://www.youtube.com/watch?v=abc123")
 
@@ -322,5 +321,5 @@ class TestYouTubeExtractorEdgeCases:
         """Test YouTube Music URL."""
         url = "https://music.youtube.com/watch?v=abc123"
         # Should recognize as YouTube
-        video_id = extractor._extract_video_id(url)
+        extractor._extract_video_id(url)
         # Implementation may vary

@@ -10,9 +10,7 @@ exact markdown output.
 import json
 import struct
 import wave
-from io import BytesIO
 from pathlib import Path
-
 
 FIXTURES_DIR = Path(__file__).parent
 

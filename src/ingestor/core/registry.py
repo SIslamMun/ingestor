@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING
 
 from ..types import MediaType
 from .detector import FileDetector
@@ -21,7 +21,7 @@ class ExtractorRegistry:
 
     def __init__(self):
         """Initialize the registry."""
-        self._extractors: Dict[MediaType, BaseExtractor] = {}
+        self._extractors: dict[MediaType, BaseExtractor] = {}
         self._detector = FileDetector()
 
     def register(self, extractor: BaseExtractor) -> None:
@@ -33,7 +33,7 @@ class ExtractorRegistry:
         self._extractors[extractor.media_type] = extractor
 
     def register_class(
-        self, extractor_class: Type[BaseExtractor], *args, **kwargs
+        self, extractor_class: type[BaseExtractor], *args, **kwargs
     ) -> None:
         """Register an extractor class (instantiates it).
 
@@ -45,7 +45,7 @@ class ExtractorRegistry:
         extractor = extractor_class(*args, **kwargs)
         self.register(extractor)
 
-    def get(self, media_type: MediaType) -> Optional[BaseExtractor]:
+    def get(self, media_type: MediaType) -> BaseExtractor | None:
         """Get an extractor by media type.
 
         Args:
@@ -56,7 +56,7 @@ class ExtractorRegistry:
         """
         return self._extractors.get(media_type)
 
-    def get_for_source(self, source: Union[str, Path]) -> Optional[BaseExtractor]:
+    def get_for_source(self, source: str | Path) -> BaseExtractor | None:
         """Get an extractor for a given source.
 
         Detects the media type using Magika and returns the appropriate extractor.
@@ -81,7 +81,7 @@ class ExtractorRegistry:
         """
         return media_type in self._extractors
 
-    def list_supported(self) -> List[MediaType]:
+    def list_supported(self) -> list[MediaType]:
         """List all supported media types.
 
         Returns:
@@ -89,7 +89,7 @@ class ExtractorRegistry:
         """
         return list(self._extractors.keys())
 
-    def list_extractors(self) -> List[BaseExtractor]:
+    def list_extractors(self) -> list[BaseExtractor]:
         """List all registered extractors.
 
         Returns:

@@ -1,15 +1,13 @@
 """Claude agent for markdown cleanup and enhancement."""
 
-from pathlib import Path
-from typing import Optional
+from typing import Any
 
-from ...types import ExtractionResult, ExtractedImage
 from ...postprocess.orphan_images import (
     detect_orphan_images,
-    recover_orphan_images,
-    suggest_image_placements,
     smart_insert_images,
+    suggest_image_placements,
 )
+from ...types import ExtractionResult
 
 
 class ClaudeAgent:
@@ -32,7 +30,7 @@ Guidelines:
 
     def __init__(
         self,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
     ):
         """Initialize Claude agent.
 
@@ -40,25 +38,25 @@ Guidelines:
             system_prompt: Custom system prompt for the agent
         """
         self.system_prompt = system_prompt or self.DEFAULT_SYSTEM_PROMPT
-        self._sdk = None
+        self._sdk: Any = None
 
-    def _get_sdk(self):
+    def _get_sdk(self) -> Any:
         """Get or create Claude SDK client."""
         if self._sdk is None:
             try:
                 from claude_code_sdk import ClaudeCode
                 self._sdk = ClaudeCode()
-            except ImportError:
+            except ImportError as e:
                 raise ImportError(
                     "Claude Code SDK not installed. "
                     "Install with: pip install claude-code-sdk"
-                )
+                ) from e
         return self._sdk
 
     async def cleanup(
         self,
         content: str,
-        context: Optional[str] = None,
+        context: str | None = None,
     ) -> str:
         """Clean up markdown content using Claude.
 
@@ -128,7 +126,7 @@ Guidelines:
     async def summarize(
         self,
         content: str,
-        max_length: Optional[int] = None,
+        max_length: int | None = None,
     ) -> str:
         """Generate a summary of the content.
 
@@ -309,7 +307,7 @@ Use format: ![Descriptive Alt Text](./img/filename.ext)"""
 
 async def cleanup_markdown(
     content: str,
-    context: Optional[str] = None,
+    context: str | None = None,
 ) -> str:
     """Convenience function to clean up markdown content.
 

@@ -2,11 +2,11 @@
 
 import json
 import zipfile
-import pytest
-from pathlib import Path
 
-from ingestor.types import MediaType
+import pytest
+
 from ingestor.core.registry import create_default_registry
+from ingestor.types import MediaType
 
 
 class TestZipExtraction:
