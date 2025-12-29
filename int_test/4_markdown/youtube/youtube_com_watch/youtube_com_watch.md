@@ -1,0 +1,31 @@
+# Fine-Tuning LLMs for Smarter AI: Build a Reasoning Agent!
+
+**Channel:** UBIAI
+**Uploaded:** 2025-02-10
+**Duration:** 4m 51s
+**Views:** 280
+
+**URL:** https://www.youtube.com/watch?v=6tkV4XJ91Bg
+
+## Description
+
+Want to take Large Language Models (LLMs) to the next level? In this tutorial, we’ll show you how to fine-tune smaller models for math and coding tasks and integrate them into an AI reasoning agent that outperforms vanilla LLMs! 
+
+What You’ll Learn:
+✅ Why vanilla LLMs struggle with reasoning-intensive tasks
+✅ How to fine-tune smaller models on math & coding datasets
+✅ How to build an AI agent that applies logical reasoning
+✅ Step-by-step implementation using function calling & tool integration
+
+This approach reduces hallucinations, improves logical problem-solving, and enhances accuracy—a must-know for AI developers and machine learning engineers!
+
+📌 Resources & Links:
+🔗 Fine-tuning tutorial: https://youtu.be/_OX_T-2R5Ao
+🔗 Blog: https://ubiai.tools/fine-tune-llm-for-agentic-reasoning-to-demonstrate-better-performance-compared-to-vanilla-llms/
+
+💬 Have questions or ideas? Drop them in the comments! And don’t forget to like & subscribe for more cutting-edge AI content. 🚀 
+#ai  #machinelearning  #llms  #artificialintelligence  #coding
+
+## Transcript
+
+hello everyone and welcome back to ubii if you're interested in learning about reasoning agents and taking large language models to the next level you're in the right place my name is mik masui and today we're building something super exciting a reasoning agent capable of handling math and coding questions like a pro before we jump into the technical side let's quickly understand how this approach can solve large language models reasoning issues as you know vanilla large language models are great but they can struggle with reasoning intensive tasks like math they might hallucinate generate irrelevant answers or fail to follow logical steps that's because they're trained to generalize over a wide range of tasks which limit their ability to excel in specific areas if you're not familiar with what an AI agent is it's simply a system capable of using external tools to perform tasks in this video we'll use the capabilities of agents to create a reasoning system that uses other AI models to reason and then applies that chain to answer user queries the core idea is to fine-tune two smaller models on reasoning specific data sets for a specific domain these fine-tuned models will then be integrated as a tool enabling a larger model to act as a smart agent that determines which model to use for a given query with this idea we achieve better accuracy logical problem solving and significantly fewer hallucinations but how do we teach our smaller models to to reason in a specific domain all we have to do is use a Chain of Thought reasoning data set this is a popular method that trains the model to think out loud breaking down problems into a step-by-step solution I found two interesting data sets online that we'll be working with the first model will be fine-tuned on math using the numina math Co data set as for the second model we'll be fing it for coding using the coot code instruction data set now that we know how our agentic reasoning approach will work let's start coding we begin with the first step I've already covered the fine- tuning process in a previous tutorial which I'll link for reference but I'll quickly go over the key steps first we install the en sloth library to make the fine tuning process simpler we will load the smaller LMA models with 4bit Precision to reduce memory us while maintaining performance to fine tune the model we'll use Laura which allows us to update only 1 to 10% of the model's parameters saving time and resources we will use predefined prompt to map the input and output of the data set once the data is prepared we can set up the trainer and start the fine training process we will use a standard training Loop to F the model after training we'll save the model on hugging phas for easy integration into our conversational agent before moving to the next part make sure to run the first part to create as many mod models as you need I only did two for proof of concept but you can go wild and have fun with it with our models ready it's time to build the reasoning agent let's first understand how it's going to work the agent receives a query from the user it decides whether it's a math or coding question or unrelated to both domains it calls the appropriate model to generate a reising a chain the agent uses the reasoning chain to make a response all of this happens through something called function calling let's start building it after calling our models we Define the tools that the AI agent will use all we have to do is create helper functions for Math and code queries that utilize the models to generate responses we then develop the chatbot logic we'll use Gro because it's very simple to implement in the chatbot logic all we're doing is prompting the model to pick tools when it needs them and providing a list of tools it has access to the chatbot will now ask for the answers from the models when necessary let's see how everything works together I'll say hello first as you can see it didn't call for help to answer this query next let's ask a math related question the blue text is a reasoning chain generated by our math model and the red text is the answer the chatbot made using the output the same thing happens when we ask a coding question great it looks like our chatbot works if we compare the answers we just got to those of a vanilla model we can see the reasoning agent outperforms the basic model the vanilla model even made a mistake on the math question proving how limited it can be and that's it for today's tutorial you now know how to find- tune en large language models for reasoning and using them to build an AI agent if you enjoyed this video don't forget to hit the like button and leave a comment down below

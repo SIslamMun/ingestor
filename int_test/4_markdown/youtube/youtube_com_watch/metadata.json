@@ -1,0 +1,21 @@
+{
+  "title": "Fine-Tuning LLMs for Smarter AI: Build a Reasoning Agent!",
+  "source": "https://youtube.com/watch?v=6tkV4XJ91Bg",
+  "media_type": "youtube",
+  "charset": null,
+  "image_count": 0,
+  "images": [],
+  "video_id": "6tkV4XJ91Bg",
+  "description": "Want to take Large Language Models (LLMs) to the next level? In this tutorial, we’ll show you how to fine-tune smaller models for math and coding tasks and integrate them into an AI reasoning agent that outperforms vanilla LLMs! \n\nWhat You’ll Learn:\n✅ Why vanilla LLMs struggle with reasoning-intensive tasks\n✅ How to fine-tune smaller models on math & coding datasets\n✅ How to build an AI agent that applies logical reasoning\n✅ Step-by-step implementation using function calling & tool integration\n\nThis approach reduces hallucinations, improves logical problem-solving, and enhances accuracy—a must-know for AI developers and machine learning engineers!\n\n📌 Resources & Links:\n🔗 Fine-tuning tutorial: https://youtu.be/_OX_T-2R5Ao\n🔗 Blog: https://ubiai.tools/fine-tune-llm-for-agentic-reasoning-to-demonstrate-better-performance-compared-to-vanilla-llms/\n\n💬 Have questions or ideas? Drop them in the comments! And don’t forget to like & subscribe for more cutting-edge AI content. 🚀 \n#ai  #machinelearning  #llms  #artificialintelligence  #coding",
+  "channel": "UBIAI",
+  "channel_id": "UCulBEok98-6xX8uGM0rn8Lw",
+  "upload_date": "20250210",
+  "duration": 291,
+  "view_count": 280,
+  "like_count": 12,
+  "tags": [],
+  "categories": [
+    "Science & Technology"
+  ],
+  "thumbnail": "https://i.ytimg.com/vi_webp/6tkV4XJ91Bg/maxresdefault.webp"
+}

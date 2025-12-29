@@ -1,0 +1,35 @@
+{
+  "title": "10.48550_arXiv.2501.12948",
+  "source": "int_test/3_papers/10.48550_arXiv.2501.12948.pdf",
+  "media_type": "pdf",
+  "charset": null,
+  "image_count": 3,
+  "images": [
+    {
+      "filename": "10_48550_arXiv_2501_12948_pdf_img_001.png",
+      "format": "png",
+      "page": null,
+      "caption": null,
+      "description": null,
+      "size_bytes": 110582
+    },
+    {
+      "filename": "10_48550_arXiv_2501_12948_pdf_img_002.png",
+      "format": "png",
+      "page": null,
+      "caption": null,
+      "description": null,
+      "size_bytes": 85949
+    },
+    {
+      "filename": "10_48550_arXiv_2501_12948_pdf_img_003.png",
+      "format": "png",
+      "page": null,
+      "caption": null,
+      "description": null,
+      "size_bytes": 90392
+    }
+  ],
+  "extractor": "docling",
+  "page_count": null
+}

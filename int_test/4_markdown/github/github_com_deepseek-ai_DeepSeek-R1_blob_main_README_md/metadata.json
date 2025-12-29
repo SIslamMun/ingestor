@@ -1,0 +1,14 @@
+{
+  "title": "README.md",
+  "source": "https://github.com/deepseek-ai/DeepSeek-R1/blob/main/README.md",
+  "media_type": "git",
+  "charset": null,
+  "image_count": 0,
+  "images": [],
+  "owner": "deepseek-ai",
+  "repo": "DeepSeek-R1",
+  "branch": "main",
+  "path": "README.md",
+  "filename": "README.md",
+  "extraction_method": "github_api"
+}
