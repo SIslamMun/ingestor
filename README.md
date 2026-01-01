@@ -1,12 +1,8 @@
 # Ingestor
 
-> Universal document → markdown + images converter  
-> With integrated scientific paper acquisition and AI-powered deep research
+> Universal document → markdown + images converter
 
-**Three CLI Tools:**
-- `ingestor` - Extract markdown and images from PDFs, Word docs, PowerPoints, EPUBs, spreadsheets, web pages, YouTube videos, audio files, Git repos, and more
-- `parser` - Download and process scientific papers from DOI, arXiv, or other identifiers with BibTeX generation and citation verification
-- `researcher` - AI-powered deep research using Google Gemini
+Extract markdown and images from PDFs, Word docs, PowerPoints, EPUBs, spreadsheets, web pages, YouTube videos, audio files, Git repos, and more.
 
 Uses Google Magika file detection.
 
@@ -56,7 +52,6 @@ uv sync
 **Specific formats**:
 ```bash
 uv sync --extra pdf         # PDF documents (Docling ML)
-uv sync --extra paper       # Scientific papers (DOI, arXiv + PDF)
 uv sync --extra docx        # Word documents
 uv sync --extra xlsx        # Excel files
 uv sync --extra web         # Web crawling
@@ -73,11 +68,6 @@ uv sync --extra docx --extra xlsx --extra web
 **All formats** (recommended):
 ```bash
 uv sync --extra all-formats
-```
-
-**Everything** (including AI features):
-```bash
-uv sync --all-extras
 ```
 
 ## Usage
@@ -144,393 +134,6 @@ uv sync --extra pdf
 
 # Docling downloads ~500MB of ML models on first use
 ```
-
-### Scientific Papers
-
-Retrieve scientific papers from DOI, arXiv, title search, or direct URLs with multi-source fallback.
-
-> **Note:** Scientific paper commands use the `parser` CLI tool.
-
-**Features:**
-- Multi-source paper retrieval (arXiv, Semantic Scholar, OpenAlex, PMC, Unpaywall, bioRxiv)
-- DOI and arXiv ID resolution
-- Title-based paper search
-- Direct PDF URL support
-- BibTeX/metadata extraction
-- DOI to BibTeX conversion (`doi2bib`)
-- Citation verification (`verify`)
-- Skip existing / force re-download
-
-**Input Formats:**
-- DOI: `10.1038/nature12373` or `-d "10.1038/nature12373"`
-- arXiv ID: `arXiv:1706.03762` or `2301.12345`
-- Title search: `-t "Attention Is All You Need"`
-- Direct PDF URLs: `https://arxiv.org/pdf/1706.03762.pdf`
-- Semantic Scholar URL
-
-**Output:**
-- Downloaded PDF
-- Log file with retrieval details
-
-```bash
-# Install paper support (includes PDF extraction)
-uv sync --extra paper
-
-# Basic paper retrieval by DOI
-parser retrieve --doi "10.1038/nature12373"
-parser retrieve -d "10.1038/nature12373"
-
-# arXiv papers
-parser retrieve arXiv:1706.03762
-parser retrieve 2301.12345
-parser retrieve https://arxiv.org/abs/1706.03762
-
-# Search by title
-parser retrieve --title "Attention Is All You Need"
-parser retrieve -t "Deep Residual Learning for Image Recognition"
-
-# Direct PDF URL
-parser retrieve "https://arxiv.org/pdf/1706.03762.pdf"
-
-# With output directory and email for API access
-parser retrieve -d "10.1038/nature12373" -o ./papers -e your@email.com
-
-# Skip if already downloaded (default), or force re-download
-parser retrieve -t "BERT" --no-skip-existing
-```
-
-#### DOI to BibTeX (doi2bib)
-
-Convert DOI or arXiv identifiers to BibTeX citations (like the original [doi2bib](https://github.com/davidagraf/doi2bib) tool):
-
-```bash
-# Single DOI to BibTeX (prints to stdout)
-parser doi2bib 10.1038/s41586-020-2649-2
-
-# arXiv ID
-parser doi2bib arXiv:1706.03762
-
-# Save to file
-parser doi2bib 10.1038/nature12373 -o numpy.bib
-
-# Different output formats
-parser doi2bib 10.1038/nature12373 --format json
-parser doi2bib 10.1038/nature12373 --format markdown
-
-# Process multiple identifiers from a file
-parser doi2bib -i dois.txt -o citations/
-
-# With Semantic Scholar API key (for better metadata)
-parser doi2bib 10.1038/nature12373 --s2-key YOUR_API_KEY
-```
-
-**Input file format (one per line):**
-```
-10.1038/s41586-020-2649-2
-arXiv:1706.03762
-10.1126/science.1234567
-# Comments are ignored
-```
-
-**Output formats:**
-- `bibtex` (default): Standard BibTeX format
-- `json`: Full metadata as JSON
-- `markdown`: Formatted citation text
-
-#### Output Example
-
-```bash
-parser retrieve -t \"Attention Is All You Need\" -o output/papers
-```
-
-```
-output/papers/
-├── Attention_Is_All_You_Need.pdf   # Downloaded PDF
-└── Attention Is All You Need.log   # Retrieval log with source info
-```
-
-**Retrieval sources (tried in order):**
-1. Unpaywall (requires email)
-2. arXiv (preprints)
-3. PMC (PubMed Central)
-4. bioRxiv/medRxiv (preprints)
-5. Semantic Scholar
-6. OpenAlex
-7. Web search
-
-#### Batch Paper Processing
-
-Process multiple papers from a file (CSV, JSON, or TXT):
-
-```bash
-# From CSV with 'doi' and/or 'title' columns
-parser batch papers.csv -o ./output
-
-# From JSON array
-parser batch references.json --concurrency 5
-
-# From TXT (one identifier per line)
-parser batch dois.txt -o ./papers
-```
-
-**CSV format:**
-```csv
-doi,title
-10.1038/nature12373,"The paper title (optional)"
-10.1126/science.1234567,
-,Attention Is All You Need
-```
-
-**JSON format:**
-```json
-[
-  {"doi": "10.1038/nature12373"},
-  {"title": "Attention Is All You Need"},
-  {"doi": "10.1126/science.1234567", "title": "Optional title"}
-]
-```
-
-**TXT format:**
-```
-# Comments supported
-10.1038/nature12373
-arXiv:1706.03762
-Attention Is All You Need
-```
-
-#### Citation Verification
-
-Verify BibTeX citations against academic databases (CrossRef, arXiv):
-
-```bash
-# Verify a single .bib file
-parser verify references.bib -o ./verified
-
-# Verify a directory of .bib files
-parser verify ./citations -o ./output
-
-# With manual pre-verified entries
-parser verify refs.bib --manual custom.bib
-
-# Skip specific citation keys
-parser verify refs.bib --skip website1 --skip github2
-
-# Dry run (see what would happen)
-parser verify refs.bib --dry-run -v
-```
-
-**Output structure:**
-```
-verified/
-├── verified.bib     # Successfully verified citations
-├── failed.bib       # Citations needing manual attention
-└── report.md        # Summary report
-```
-
-**Verification logic:**
-- DOI citations: Verified against CrossRef/doi.org
-- arXiv papers: Verified against arXiv API (title matching)
-- Websites: Annotated with access dates (no DOI expected)
-- Missing DOIs: Searched via CrossRef title search
-- Citation keys: Preserved from original entries
-
-#### Check Paper Sources
-
-See available sources and their status:
-
-```bash
-parser sources
-```
-
-Output:
-```
-Paper Acquisition Sources
-============================================================
-
-| Source           | Status | Description          | Auth |
-|------------------|--------|----------------------|------|
-| arXiv            | ✓      | Open access preprints| No auth required |
-| Unpaywall        | ✓      | Open access papers   | Email: ✓ |
-| PMC              | ✓      | PubMed Central       | NCBI key: ○ Optional |
-| bioRxiv          | ✓      | Biology preprints    | No auth required |
-| medRxiv          | ✓      | Medical preprints    | No auth required |
-| CrossRef         | ✓      | DOI metadata         | Polite pool: ✓ |
-| Semantic Scholar | ✓      | Metadata & citations | API key: ○ Optional |
-| OpenAlex         | ✓      | Metadata             | Email: ✓ |
-| Institutional    | ○      | EZProxy/VPN access   | Run: parser auth |
-| WebSearch        | ○      | Claude SDK search    | pip install claude-code-sdk |
-
-Not Implemented (Legal Concerns):
-  ⛔ Sci-Hub - PDF retrieval (intentionally excluded)
-  ⛔ LibGen  - PDF retrieval (intentionally excluded)
-```
-
-#### Institutional Access (EZProxy/VPN)
-
-Access papers through your university's subscriptions (IEEE, ACM, Elsevier, etc.):
-
-```bash
-# EZProxy mode - opens browser for Shibboleth/SAML login
-parser auth --proxy-url "https://ezproxy.university.edu/login?url="
-
-# VPN mode - runs your VPN connection script
-parser auth --vpn-script ~/vpn-connect.sh
-```
-
-**Environment variables:**
-```bash
-export INSTITUTIONAL_PROXY_URL="https://ezproxy.university.edu/login?url="
-export INSTITUTIONAL_VPN_SCRIPT="/path/to/vpn-connect.sh"
-```
-
-**Requirements for EZProxy:**
-```bash
-pip install selenium webdriver-manager
-```
-
-#### Config Sync (Push/Pull)
-
-Sync your paper acquisition config across machines using GitHub Gists:
-
-```bash
-# Create config file
-parser init
-
-# Push config to a private gist
-parser config-push
-
-# Pull config on another machine
-parser config-pull --gist-id abc123def456
-```
-
-**Requirements:**
-```bash
-# Install GitHub CLI
-# macOS: brew install gh
-# Linux: see https://cli.github.com/
-gh auth login
-```
-
-#### Supported Identifiers
-
-| Type | Examples |
-|------|----------|
-| DOI | `10.1038/nature12373`, `https://doi.org/10.1038/nature12373` |
-| arXiv | `arXiv:1706.03762`, `2301.12345`, `https://arxiv.org/abs/1706.03762` |
-| Semantic Scholar | `https://www.semanticscholar.org/paper/...` |
-| OpenAlex | `W2741809807`, `https://openalex.org/W2741809807` |
-| PubMed | `PMID:12345678`, `https://pubmed.ncbi.nlm.nih.gov/12345678` |
-| PMC | `PMC1234567` |
-| PDF URL | `https://example.com/paper.pdf` |
-| Title | `"Attention Is All You Need"` |
-
-#### Features
-
-- **DOI Resolution**: Automatic resolution via CrossRef, Semantic Scholar, OpenAlex
-- **arXiv Support**: Full arXiv ID resolution and PDF download
-- **PDF Download**: Open access PDFs via Unpaywall, arXiv, PMC, bioRxiv
-- **Markdown Extraction**: PDF to markdown with YAML metadata header
-- **BibTeX Generation**: Automatic citation generation with proper formatting
-- **Citation Graph**: Fetch cited papers via Semantic Scholar API (`--references`)
-- **Metadata Enrichment**: Authors, year, venue, abstract, citation count
-- **Citation Verification**: Verify BibTeX entries against CrossRef/arXiv (doi2bib-style)
-- **Batch Processing**: Process multiple papers from CSV/JSON/TXT files
-
-#### API Clients
-
-| API | Purpose |
-|-----|---------|
-| Semantic Scholar | Metadata, citations, references |
-| CrossRef | DOI resolution, metadata |
-| OpenAlex | Metadata, open access links |
-| arXiv | arXiv papers, metadata |
-| Unpaywall | Open access PDF links |
-| PubMed/PMC | Biomedical papers |
-| bioRxiv/medRxiv | Biology and medical preprints |
-
-#### Environment Variables
-
-```bash
-# Email for API access (CrossRef polite pool, Unpaywall, OpenAlex)
-export INGESTOR_EMAIL="your@email.com"
-
-# Semantic Scholar API key (optional, for higher rate limits)
-export S2_API_KEY="your_api_key"
-
-# NCBI API key for PubMed Central (optional)
-export NCBI_API_KEY="your_ncbi_key"
-
-# Institutional access (optional)
-export INSTITUTIONAL_PROXY_URL="https://ezproxy.university.edu/login?url="
-export INSTITUTIONAL_VPN_SCRIPT="/path/to/vpn-connect.sh"
-```
-
-#### Output Structure
-
-```
-output/
-├── Author_Year_Title.pdf     # Downloaded PDF
-├── Author_Year_Title.md      # Markdown with YAML metadata header
-├── citation.bib              # BibTeX citation
-└── references.txt            # Citation list (with --references)
-```
-
-#### Markdown Output Format
-
-```markdown
----
-title: "Paper Title"
-authors: ['Author One', 'Author Two']
-year: 2023
-doi: "10.1038/nature12373"
-arxiv: "2301.12345"
-venue: "Nature"
-abstract: "Paper abstract text..."
-source_pdf: "Author_2023_Paper_Title.pdf"
----
-
-## Paper Title
-
-Author One, Author Two
-
-## Abstract
-
-Paper abstract text...
-
----
-
-## Content
-
-Full paper content extracted from PDF...
-```
-
-### Deep Research
-
-> **Note:** Deep research commands use the `researcher` CLI tool.
-
-AI-powered deep research using Google Gemini to conduct comprehensive research on any topic.
-
-```bash
-# Install research support
-uv sync --extra researcher
-
-# Conduct deep research on a topic
-researcher research "quantum computing applications in drug discovery"
-
-# With custom output directory
-researcher research "machine learning for climate modeling" -o ./research_output
-
-# With verbose output
-researcher research "renewable energy storage solutions" -v
-```
-
-**Requirements:**
-- Google Gemini API key (`GOOGLE_API_KEY` environment variable)
-- `uv sync --extra researcher`
-
-**Output:**
-- Comprehensive research report in markdown format
-- Structured analysis with citations and sources
 
 ### Web Crawling
 ```bash
@@ -745,15 +348,15 @@ uv run pytest --cov=ingestor
 
 ### Test Categories
 
-The test suite includes 268+ tests across several categories:
+The test suite includes tests across several categories:
 
-| Category | Description | Count |
-|----------|-------------|-------|
-| **Unit Tests** | Core functionality | 175+ |
-| - Edge Cases | Empty files, unicode, malformed data | 30 |
-| - Performance | Speed benchmarks, memory tests | 19 |
-| - Reference | Regression tests with known outputs | 11 |
-| **Integration** | Real file extraction | 93+ |
+| Category | Description |
+|----------|-------------|
+| **Unit Tests** | Core functionality |
+| - Edge Cases | Empty files, unicode, malformed data |
+| - Performance | Speed benchmarks, memory tests |
+| - Reference | Regression tests with known outputs |
+| **Integration** | Real file extraction |
 
 **Note:** Web crawling uses [Crawl4AI](https://github.com/unclecode/crawl4ai) which requires Playwright browsers. If you skip the `playwright install` step, web tests will be skipped with a helpful message.
 
