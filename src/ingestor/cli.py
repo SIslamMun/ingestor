@@ -82,7 +82,8 @@ def ingest(ctx: click.Context, input: str, **kwargs):
             console.print(f"[red]Error:[/red] No extractor available for {input}")
             console.print(f"Detected type: {media_type.value}")
             console.print("\nMake sure you have installed the required dependencies:")
-            console.print(f"  pip install ingestor[{media_type.value}]")
+            console.print(f"  uv sync --extra {media_type.value}")
+            console.print(f"  # or: pip install ingestor[{media_type.value}]")
             raise SystemExit(1)
 
         with Progress(
@@ -189,7 +190,8 @@ def crawl(ctx: click.Context, url: str, **kwargs):
         extractor = registry.get(MediaType.WEB)
         if extractor is None:
             console.print("[red]Error:[/red] Web extractor not available")
-            console.print("Install with: pip install ingestor[web]")
+            console.print("Install with: uv sync --extra web")
+            console.print("  # or: pip install ingestor[web]")
             raise SystemExit(1)
 
         console.print(f"Crawling: {url}")
@@ -329,7 +331,8 @@ def describe(input: str, vlm_model: str, ollama_host: str, verbose: bool):
             from .ai.ollama.vlm import VLMDescriber
         except ImportError as e:
             console.print("[red]Error:[/red] VLM dependencies not installed")
-            console.print("Install with: pip install ingestor[vlm]")
+            console.print("Install with: uv sync --extra vlm")
+            console.print("  # or: pip install ingestor[vlm]")
             raise SystemExit(1) from e
 
         describer = VLMDescriber(host=ollama_host, model=vlm_model)
