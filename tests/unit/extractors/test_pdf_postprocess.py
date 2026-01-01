@@ -337,3 +337,33 @@ $$x = y * z$$
         result = process_equations(content)
         assert "\\frac{a}{b}" in result
         assert "\\sqrt{c}" in result
+
+    def test_bare_newline_wrapped_in_aligned(self):
+        """Test bare \\\\ outside environment is wrapped in aligned."""
+        content = r"$$x = 1 \\y = 2$$"
+        result = process_equations(content)
+        assert "\\begin{aligned}" in result
+        assert "\\end{aligned}" in result
+
+    def test_newline_inside_cases_not_wrapped(self):
+        """Test \\\\ inside cases environment is NOT wrapped."""
+        content = r"$$p = \begin{cases} a & t < T \\b & t \geq T \end{cases}$$"
+        result = process_equations(content)
+        # Should NOT add aligned wrapper since \\ is inside cases
+        assert "\\begin{aligned}" not in result
+        assert "\\begin{cases}" in result
+
+    def test_newline_inside_array_not_wrapped(self):
+        """Test \\\\ inside array environment is NOT wrapped."""
+        content = r"$$\begin{array}{rl} x & = 1 \\ y & = 2 \end{array}$$"
+        result = process_equations(content)
+        # Should NOT add aligned wrapper since \\ is inside array
+        assert "\\begin{aligned}" not in result
+        assert "\\begin{array}" in result
+
+    def test_bare_newline_outside_cases_is_wrapped(self):
+        """Test bare \\\\ OUTSIDE cases but cases exists - should wrap."""
+        content = r"$$\epsilon = f \\p = \begin{cases} a & b \end{cases}$$"
+        result = process_equations(content)
+        # Should add aligned wrapper since \\ before cases is bare
+        assert "\\begin{aligned}" in result

@@ -16,6 +16,7 @@ def cleanup_text(content: str) -> str:
     - Ligature replacement (ﬁ→fi, ﬂ→fl, ﬀ→ff, etc.)
     - Excessive blank lines (max 2 consecutive)
     - Trailing whitespace
+    - Glyph artifacts from PDF extraction
 
     Args:
         content: Markdown content
@@ -24,6 +25,7 @@ def cleanup_text(content: str) -> str:
         Cleaned content
     """
     content = _fix_ligatures(content)
+    content = _fix_glyph_artifacts(content)
     content = _fix_excessive_blank_lines(content)
     content = _fix_trailing_whitespace(content)
     return content
@@ -56,6 +58,52 @@ def _fix_excessive_blank_lines(content: str) -> str:
     Reduce multiple consecutive blank lines to maximum of 2.
     """
     return re.sub(r"\n{3,}", "\n\n", content)
+
+
+def _fix_glyph_artifacts(content: str) -> str:
+    """
+    Fix glyph[...] artifacts from PDF extraction.
+
+    Common patterns:
+    - glyph[epsilon1] -> ε
+    - glyph[alpha] -> α
+    """
+    # Map of glyph names to Unicode characters
+    glyph_map = {
+        "epsilon1": "ε",
+        "epsilon": "ε",
+        "alpha": "α",
+        "beta": "β",
+        "gamma": "γ",
+        "delta": "δ",
+        "theta": "θ",
+        "lambda": "λ",
+        "mu": "μ",
+        "sigma": "σ",
+        "phi": "φ",
+        "psi": "ψ",
+        "omega": "ω",
+        "pi": "π",
+        "rho": "ρ",
+        "tau": "τ",
+        "eta": "η",
+        "zeta": "ζ",
+        "xi": "ξ",
+        "nu": "ν",
+        "kappa": "κ",
+        "iota": "ι",
+        "chi": "χ",
+        "upsilon": "υ",
+    }
+
+    def replace_glyph(match: re.Match[str]) -> str:
+        glyph_name = match.group(1).lower()
+        return glyph_map.get(glyph_name, match.group(0))
+
+    # Match glyph[name] pattern
+    content = re.sub(r"glyph\[(\w+)\]", replace_glyph, content, flags=re.IGNORECASE)
+
+    return content
 
 
 def _fix_trailing_whitespace(content: str) -> str:
